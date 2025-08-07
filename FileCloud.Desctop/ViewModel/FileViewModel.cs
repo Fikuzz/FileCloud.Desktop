@@ -1,4 +1,4 @@
-﻿using FileCloud.Desctop.Models;
+﻿using FileCloud.Desktop.Models;
 using System;
 using System.IO;
 using System.Windows.Media;

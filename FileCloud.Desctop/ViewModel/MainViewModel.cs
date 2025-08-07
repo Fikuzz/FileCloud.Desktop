@@ -1,4 +1,4 @@
-﻿using FileCloud.Desctop.Models;
+﻿using FileCloud.Desktop.Models;
 using FileCloud.Desktop.Commands;
 using FileCloud.Desktop.Services;
 using Microsoft.Extensions.Configuration;

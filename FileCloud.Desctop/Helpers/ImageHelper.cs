@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace FileCloud.Desctop.Helpers
+namespace FileCloud.Desktop.Helpers
 {
     public static class ImageHelper
     {

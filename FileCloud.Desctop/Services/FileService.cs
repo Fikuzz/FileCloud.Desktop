@@ -1,5 +1,5 @@
-﻿using FileCloud.Desctop.Helpers;
-using FileCloud.Desctop.Models;
+﻿using FileCloud.Desktop.Helpers;
+using FileCloud.Desktop.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;

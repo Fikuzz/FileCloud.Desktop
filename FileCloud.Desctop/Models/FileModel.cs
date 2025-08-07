@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FileCloud.Desctop.Models
+namespace FileCloud.Desktop.Models
 {
     public class FileModel
     {

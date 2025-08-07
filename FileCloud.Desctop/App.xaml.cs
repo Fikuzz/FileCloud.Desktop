@@ -2,7 +2,7 @@
 using System.Data;
 using System.Windows;
 
-namespace FileCloud.Desctop
+namespace FileCloud.Desktop
 {
     /// <summary>
     /// Interaction logic for App.xaml

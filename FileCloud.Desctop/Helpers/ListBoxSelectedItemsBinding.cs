@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace FileCloud.Desctop.Helpers
+namespace FileCloud.Desktop.Helpers
 {
     public static class ListBoxSelectedItemsBinding
     {
