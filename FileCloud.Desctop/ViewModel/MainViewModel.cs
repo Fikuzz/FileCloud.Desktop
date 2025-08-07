@@ -26,6 +26,7 @@ namespace FileCloud.Desktop.ViewModels
 
         public ICommand LoadFilesCommand { get; }
         public ICommand UploadFilesCommand { get; }
+        public ICommand SaveFilesCommand { get; }
         public ICommand DeleteFilesCommand { get; }
 
         public ObservableCollection<FileViewModel> SelectedFiles { get; set; }
@@ -44,6 +45,7 @@ namespace FileCloud.Desktop.ViewModels
 
             LoadFilesCommand = new RelayCommand(async _ => await LoadFiles());
             UploadFilesCommand = new RelayCommand(async _ => await UploadFiles());
+            SaveFilesCommand = new RelayCommand(async _ => await SaveFiles());
             DeleteFilesCommand = new RelayCommand(async _ => await DeleteFiles());
         }
 
@@ -88,7 +90,6 @@ namespace FileCloud.Desktop.ViewModels
                 StatusMessage = $"Ошибка загрузки: {ex.Message}";
             }
         }
-
         private async Task UploadFiles()
         {
             var dialog = new OpenFileDialog { Multiselect = true };
@@ -100,7 +101,29 @@ namespace FileCloud.Desktop.ViewModels
             StatusMessage = result;
             await LoadFiles();
         }
+        private async Task SaveFiles()
+        {
+            if (!SelectedFiles.Any())
+            {
+                StatusMessage = "Выберите хотя бы один файл.";
+                return;
+            }
+            try
+            {
+                var ids = SelectedFiles.Select(f => f.Id).ToList();
+                var dialog = new OpenFolderDialog();
+                if (dialog.ShowDialog() != true)
+                    return;
 
+                StatusMessage = "Сохранение файла...";
+                await _fileService.DownloadFilesAsync(ids, dialog.FolderName);
+                StatusMessage = "Файлы сохранены.";
+            }
+            catch
+            {
+                StatusMessage = "Не удалось скачать файлы.";
+            }
+        }
         private async Task DeleteFiles()
         {
             if (!SelectedFiles.Any())
@@ -127,7 +150,6 @@ namespace FileCloud.Desktop.ViewModels
                 StatusMessage = $"Ошибка при удалении: {ex.Message}";
             }
         }
-
         private string GetIconPathForExtension(string ext)
         {
             var icoPath = $"/Assets/Icons/{ext}.png";

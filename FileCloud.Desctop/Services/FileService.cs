@@ -6,6 +6,7 @@ using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -74,6 +75,29 @@ namespace FileCloud.Desktop.Services
             var image = ImageHelper.ByteArrayToImageSource(stream);
 
             return image;
+        }
+        /// <summary>
+        /// Получить файлы по идентификатору.
+        /// </summary>
+        public async Task DownloadFilesAsync(IEnumerable<Guid> ids, string folder)
+        {
+            foreach(var id in ids)
+            {
+                var response = await _client.GetAsync($"/api/file/download/{id}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var contentDisposition = response.Content.Headers.ContentDisposition;
+                    var fileName = contentDisposition?.FileName?.Trim('"') ?? "new_file";
+                    var fileBytes = await response.Content.ReadAsByteArrayAsync();
+                    var savePath = Path.Combine(folder, fileName);
+                    
+                    await File.WriteAllBytesAsync(savePath, fileBytes);
+                }
+                else
+                {
+                    Console.WriteLine("error: Не удалось получить файл!");
+                }
+            }
         }
     }
 }
