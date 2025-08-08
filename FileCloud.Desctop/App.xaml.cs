@@ -1,6 +1,7 @@
 ﻿using System.Configuration;
 using System.Data;
 using System.Windows;
+using FileCloud.Desktop.Services;
 
 namespace FileCloud.Desktop
 {
@@ -9,6 +10,10 @@ namespace FileCloud.Desktop
     /// </summary>
     public partial class App : Application
     {
+        public App()
+        {
+            ScriptManager.EnsureDefaultScripts();
+        }
     }
 
 }

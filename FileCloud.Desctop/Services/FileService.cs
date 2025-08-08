@@ -1,14 +1,9 @@
 ﻿using FileCloud.Desktop.Helpers;
 using FileCloud.Desktop.Models;
-using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 namespace FileCloud.Desktop.Services
 {
@@ -88,8 +83,11 @@ namespace FileCloud.Desktop.Services
                 {
                     var contentDisposition = response.Content.Headers.ContentDisposition;
                     var fileName = contentDisposition?.FileName?.Trim('"') ?? "new_file";
+
+                    var newName = ScriptHelper.Rename(fileName);
+                   
                     var fileBytes = await response.Content.ReadAsByteArrayAsync();
-                    var savePath = Path.Combine(folder, fileName);
+                    var savePath = Path.Combine(folder, newName);
                     
                     await File.WriteAllBytesAsync(savePath, fileBytes);
                 }
