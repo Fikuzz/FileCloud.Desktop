@@ -74,27 +74,28 @@ namespace FileCloud.Desktop.Services
         /// <summary>
         /// Получить файлы по идентификатору.
         /// </summary>
-        public async Task DownloadFilesAsync(IEnumerable<Guid> ids, string folder)
+        public async Task<string?> DownloadFileAsync(Guid id, string folder)
         {
-            foreach(var id in ids)
+            var response = await _client.GetAsync($"/api/file/download/{id}");
+            if (response.IsSuccessStatusCode)
             {
-                var response = await _client.GetAsync($"/api/file/download/{id}");
-                if (response.IsSuccessStatusCode)
-                {
-                    var contentDisposition = response.Content.Headers.ContentDisposition;
-                    var fileName = contentDisposition?.FileName?.Trim('"') ?? "new_file";
+                var contentDisposition = response.Content.Headers.ContentDisposition;
+                var fileName = contentDisposition?.FileName?.Trim('"') ?? "new_file";
 
-                    var newName = ScriptHelper.Rename(fileName);
-                   
-                    var fileBytes = await response.Content.ReadAsByteArrayAsync();
-                    var savePath = Path.Combine(folder, newName);
-                    
-                    await File.WriteAllBytesAsync(savePath, fileBytes);
-                }
-                else
-                {
-                    Console.WriteLine("error: Не удалось получить файл!");
-                }
+                var newName = ScriptHelper.Rename(fileName);
+
+                var fileBytes = await response.Content.ReadAsByteArrayAsync();
+                var savePath = Path.Combine(folder, newName);
+
+                await File.WriteAllBytesAsync(savePath, fileBytes);
+
+                FileMappingManager.AddOrUpdate(id, savePath);
+                return newName;
+            }
+            else
+            {
+                Console.WriteLine("error: Не удалось получить файл!");
+                return null;
             }
         }
     }
