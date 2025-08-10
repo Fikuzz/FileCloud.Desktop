@@ -1,12 +1,18 @@
-﻿using FileCloud.Desktop.Models;
-using FileCloud.Desktop.Commands;
+﻿using FileCloud.Desktop.Commands;
+using FileCloud.Desktop.Helpers;
+using FileCloud.Desktop.Models;
 using FileCloud.Desktop.Services;
+using FileCloud.Desktop.Settings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 
@@ -28,6 +34,7 @@ namespace FileCloud.Desktop.ViewModels
         public ICommand UploadFilesCommand { get; }
         public ICommand SaveFilesCommand { get; }
         public ICommand DeleteFilesCommand { get; }
+        public ICommand FileDoubleClickCommand { get; }
 
         public ObservableCollection<FileViewModel> SelectedFiles { get; set; }
 
@@ -47,6 +54,13 @@ namespace FileCloud.Desktop.ViewModels
             UploadFilesCommand = new RelayCommand(async _ => await UploadFiles());
             SaveFilesCommand = new RelayCommand(async _ => await SaveFiles());
             DeleteFilesCommand = new RelayCommand(async _ => await DeleteFiles());
+            FileDoubleClickCommand = new RelayCommand(async param =>
+            {
+                if(param is FileViewModel file)
+                {
+                    await OpenLocalFile(file);
+                }
+            });
         }
 
         private async Task LoadFiles()
@@ -111,12 +125,13 @@ namespace FileCloud.Desktop.ViewModels
             try
             {
                 var ids = SelectedFiles.Select(f => f.Id).ToList();
-                var dialog = new OpenFolderDialog();
-                if (dialog.ShowDialog() != true)
-                    return;
+                var folderPath = DownloadSettings.DownloadPath;
 
                 StatusMessage = "Сохранение файла...";
-                await _fileService.DownloadFilesAsync(ids, dialog.FolderName);
+                foreach (var id in ids)
+                {
+                    await _fileService.DownloadFileAsync(id, folderPath);
+                }
                 StatusMessage = "Файлы сохранены.";
             }
             catch
@@ -150,11 +165,32 @@ namespace FileCloud.Desktop.ViewModels
                 StatusMessage = $"Ошибка при удалении: {ex.Message}";
             }
         }
+        private async Task OpenLocalFile(FileViewModel file)
+        {
+            var path = FileMappingManager.GetLocalPath(file.Id);
+
+            if (path == null || !File.Exists(path))
+            {
+                var folderPath = DownloadSettings.DownloadPath;
+                var newName = await _fileService.DownloadFileAsync(file.Id, folderPath);
+                path = Path.Combine(folderPath, newName);
+            }
+
+            if (File.Exists(path))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = path,
+                    UseShellExecute = true // нужно для открытия через ассоциацию в Windows
+                });
+            }
+        }
         private string GetIconPathForExtension(string ext)
         {
-            var icoPath = $"/Assets/Icons/{ext}.png";
+            var iconsPath = Path.Combine(Environment.CurrentDirectory, "Assets\\Icons");
+            var ico = Path.Combine(iconsPath, $"{ext}.png");
 
-            return File.Exists(icoPath) ? icoPath : "/Assets/Icons/default.png";
+            return File.Exists(ico) ? ico : Path.Combine(iconsPath, "default.png");
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
