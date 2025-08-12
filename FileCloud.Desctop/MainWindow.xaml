@@ -81,6 +81,7 @@
 				VerticalScrollBarVisibility="Auto"
 				HorizontalScrollBarVisibility="Disabled">
                 <ListBox
+                    x:Name="lb_Files"
 					SelectionMode="Extended"
 					BorderThickness="0"
 					Background="#00FFFFFF"
@@ -89,6 +90,34 @@
 					ScrollViewer.VerticalScrollBarVisibility="Auto"
 					ItemsSource="{Binding Files}"
 					helpers:ListBoxSelectedItemsBinding.BindableSelectedItems="{Binding SelectedFiles}" d:ItemsSource="{d:SampleData ItemCount=5}" BorderBrush="#FF909090">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Tag" Value="{Binding DataContext, ElementName=lb_Files}"/>
+                            <Setter Property="ContextMenu">
+                                <Setter.Value>
+                                    <ContextMenu DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
+                                        <MenuItem Header="Open"
+                                            Command="{Binding FileOpenCommand}"
+                                            CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}, Path=PlacementTarget.DataContext}"/>
+                                        <MenuItem Header="Save"
+                                            Command="{Binding SaveFilesCommand}"/>
+                                        <Separator/>
+                                        <MenuItem Header="Refresh"
+                                            Command="{Binding LoadFilesCommand}"/>
+                                        <Separator/>
+                                        <MenuItem Header="Delete"
+                                            Command="{Binding DeleteFilesCommand}"
+                                            CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}, Path=PlacementTarget.DataContext}"/>
+                                    </ContextMenu>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.InputBindings>
+                        <KeyBinding Key="Delete"
+                            Command="{Binding DeleteFilesCommand}"
+                            CommandParameter="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=ListBox}}" />
+                    </ListBox.InputBindings>
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                                 <WrapPanel />
@@ -99,7 +128,7 @@
                             <StackPanel>
                                 <StackPanel.InputBindings>
                                     <MouseBinding MouseAction="LeftDoubleClick"
-                                        Command="{Binding DataContext.FileDoubleClickCommand, RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}"
+                                        Command="{Binding DataContext.FileOpenCommand, RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}"
                                         CommandParameter="{Binding}" />
                                 </StackPanel.InputBindings>
                                 <Border                                
