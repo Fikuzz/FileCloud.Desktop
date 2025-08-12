@@ -1,6 +1,5 @@
 function rename_file(file)
-    local currentDateTime = os.date("%Y-%m-%d_%H-%M-%S")
     local name, ext = string.match(file, "^(.*)%.(.*)$")
-    local newName = name .. "_" .. currentDateTime
+    local newName = name .. "_" .. "Downloaded"
     return newName .. "." .. ext
 end
