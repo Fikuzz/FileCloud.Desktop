@@ -7,10 +7,7 @@ public static class ScriptManager
     {
         get
         {
-            string path = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "FileCloud.Desktop", "Scripts"
-            );
+            string path = Path.Combine(AppContext.BaseDirectory, "Scripts");
             Directory.CreateDirectory(path);
             return path;
         }
@@ -18,9 +15,7 @@ public static class ScriptManager
 
     public static void EnsureDefaultScripts()
     {
-        string defaultScriptsPath = Path.Combine(AppContext.BaseDirectory, "Scripts");
-
-        foreach (var scriptFile in Directory.GetFiles(defaultScriptsPath, "*.lua"))
+        foreach (var scriptFile in Directory.GetFiles(ScriptsFolder, "*.lua"))
         {
             string fileName = Path.GetFileName(scriptFile);
             string targetPath = Path.Combine(ScriptsFolder, fileName);
