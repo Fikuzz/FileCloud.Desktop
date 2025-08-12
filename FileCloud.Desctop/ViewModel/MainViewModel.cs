@@ -34,7 +34,7 @@ namespace FileCloud.Desktop.ViewModels
         public ICommand UploadFilesCommand { get; }
         public ICommand SaveFilesCommand { get; }
         public ICommand DeleteFilesCommand { get; }
-        public ICommand FileDoubleClickCommand { get; }
+        public ICommand FileOpenCommand { get; }
 
         public ObservableCollection<FileViewModel> SelectedFiles { get; set; }
 
@@ -54,7 +54,7 @@ namespace FileCloud.Desktop.ViewModels
             UploadFilesCommand = new RelayCommand(async _ => await UploadFiles());
             SaveFilesCommand = new RelayCommand(async _ => await SaveFiles());
             DeleteFilesCommand = new RelayCommand(async _ => await DeleteFiles());
-            FileDoubleClickCommand = new RelayCommand(async param =>
+            FileOpenCommand = new RelayCommand(async param =>
             {
                 if(param is FileViewModel file)
                 {
