@@ -26,7 +26,10 @@ namespace FileCloud.Desktop.Services
         {
             return await _client.GetFromJsonAsync<List<FileModel>>("/api/file");
         }
-
+        public async Task<FileModel> GetFileByIdAsync(Guid id)
+        {
+            return await _client.GetFromJsonAsync<FileModel>($"/api/file/{id}");
+        }
         /// <summary>
         /// Загрузить несколько файлов на сервер.
         /// </summary>
