@@ -37,7 +37,7 @@ namespace FileCloud.Desktop.ViewModels
         public ICommand FileOpenCommand { get; }
 
         public ObservableCollection<FileViewModel> SelectedFiles { get; set; }
-
+        private FileSyncService _fileSyncService;
         public MainViewModel()
         {
             var config = new ConfigurationBuilder()
@@ -60,6 +60,38 @@ namespace FileCloud.Desktop.ViewModels
                 {
                     await OpenLocalFile(file);
                 }
+            });
+
+            _fileSyncService = new FileSyncService(apiBaseUrl);
+            _fileSyncService.FileReceived += OnFileReceived;
+            _fileSyncService.StartAsync();
+        }
+        private void OnFileReceived(FileModel file)
+        {
+            // Update your ObservableCollection< FileModel >
+            App.Current.Dispatcher.Invoke(async() =>
+            {
+                var fileView = new FileViewModel(file);
+
+                string ext = System.IO.Path.GetExtension(file.Name).ToLower();
+
+                if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".mp4" || ext == ".mov" || ext == ".mkv")
+                {
+                    // Загружаем превью с сервера
+                    var imageData = await _fileService.GetPreviewAsync(file.Id);
+
+                    if (imageData != null)
+                    {
+                        fileView.PreviewImage = imageData;
+                    }
+                }
+                else
+                {
+                    // Устанавливаем путь к локальной иконке по расширению
+                    fileView.PreviewPath = GetIconPathForExtension(ext);
+                }
+
+                Files.Add(fileView);
             });
         }
 
@@ -113,7 +145,7 @@ namespace FileCloud.Desktop.ViewModels
             StatusMessage = "Загрузка файлов...";
             var result = await _fileService.UploadFilesAsync("uploads", dialog.FileNames);
             StatusMessage = result;
-            await LoadFiles();
+            //await LoadFiles();
         }
         private async Task SaveFiles()
         {
