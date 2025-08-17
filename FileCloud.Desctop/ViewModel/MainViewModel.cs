@@ -20,10 +20,10 @@ namespace FileCloud.Desktop.ViewModels
 {
     public class MainViewModel : INotifyPropertyChanged
     {
+        private FileSyncService _fileSyncService;
         private readonly FileService _fileService;
-        public ObservableCollection<FileViewModel> Files { get; } = new();
-
         private string? _statusMessage;
+        public ObservableCollection<FileViewModel> Files { get; } = new();
         public string? StatusMessage
         {
             get => _statusMessage;
@@ -37,7 +37,6 @@ namespace FileCloud.Desktop.ViewModels
         public ICommand FileOpenCommand { get; }
 
         public ObservableCollection<FileViewModel> SelectedFiles { get; set; }
-        private FileSyncService _fileSyncService;
         public MainViewModel()
         {
             var config = new ConfigurationBuilder()
@@ -64,7 +63,9 @@ namespace FileCloud.Desktop.ViewModels
 
             _fileSyncService = new FileSyncService(apiBaseUrl);
             _fileSyncService.FileReceived += OnFileReceived;
-            _fileSyncService.StartAsync();
+            _fileSyncService.ServerState += ServerStateChanged;
+            _fileSyncService.FileDeleted += OnFileDeleted;
+            _fileSyncService.StartMonitoringAsync();
         }
         private void OnFileReceived(FileModel file)
         {
@@ -78,11 +79,15 @@ namespace FileCloud.Desktop.ViewModels
                 if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".mp4" || ext == ".mov" || ext == ".mkv")
                 {
                     // Загружаем превью с сервера
-                    var imageData = await _fileService.GetPreviewAsync(file.Id);
+                    var (imageData, error) = await _fileService.GetPreviewAsync(file.Id);
 
                     if (imageData != null)
                     {
                         fileView.PreviewImage = imageData;
+                    }
+                    else
+                    {
+                        StatusMessage = error;
                     }
                 }
                 else
@@ -94,7 +99,25 @@ namespace FileCloud.Desktop.ViewModels
                 Files.Add(fileView);
             });
         }
+        private void OnFileDeleted(Guid id)
+        {
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                var file = Files.First(f => f.Id == id);
+                Files.Remove(file);
+            });
+        }
+        private void ServerStateChanged(bool isActive, string description)
+        {
+            App.Current.Dispatcher.Invoke(async () =>
+            {
+                _fileService.ServerState = isActive;
+                StatusMessage = description;
 
+                if (isActive)
+                    await LoadFiles();
+            });
+        }
         private async Task LoadFiles()
         {
             try
@@ -102,8 +125,12 @@ namespace FileCloud.Desktop.ViewModels
                 StatusMessage = "Загрузка файлов...";
                 Files.Clear();
 
-                var result = await _fileService.GetFilesAsync();
-
+                var (result, error) = await _fileService.GetFilesAsync();
+                if(result == null)
+                {
+                    StatusMessage = error;
+                    return;
+                }
                 foreach (var file in result)
                 {
                     var fileView = new FileViewModel(file);
@@ -113,11 +140,15 @@ namespace FileCloud.Desktop.ViewModels
                     if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".mp4" || ext == ".mov" || ext == ".mkv")
                     {
                         // Загружаем превью с сервера
-                        var imageData = await _fileService.GetPreviewAsync(file.Id);
+                        var (imageData, errorImage) = await _fileService.GetPreviewAsync(file.Id);
 
                         if (imageData != null)
                         {
                             fileView.PreviewImage = imageData;
+                        }
+                        else
+                        {
+                            StatusMessage = errorImage;
                         }
                     }
                     else
@@ -143,8 +174,8 @@ namespace FileCloud.Desktop.ViewModels
                 return;
 
             StatusMessage = "Загрузка файлов...";
-            var result = await _fileService.UploadFilesAsync("uploads", dialog.FileNames);
-            StatusMessage = result;
+            var (result, error) = await _fileService.UploadFilesAsync("uploads", dialog.FileNames);
+            StatusMessage = error == string.Empty ? result : error;
             //await LoadFiles();
         }
         private async Task SaveFiles()
@@ -162,7 +193,13 @@ namespace FileCloud.Desktop.ViewModels
                 StatusMessage = "Сохранение файла...";
                 foreach (var id in ids)
                 {
-                    await _fileService.DownloadFileAsync(id, folderPath);
+                    var (result, error) = await _fileService.DownloadFileAsync(id, folderPath);
+                    if (error != string.Empty)
+                    {
+                        StatusMessage = error;
+                        return;
+                    }
+
                 }
                 StatusMessage = "Файлы сохранены.";
             }
@@ -182,14 +219,15 @@ namespace FileCloud.Desktop.ViewModels
             try
             {
                 var ids = SelectedFiles.Select(f => f.Id).ToList();
-                var result = await _fileService.DeleteFilesAsync(ids); // новый метод
-                StatusMessage = $"Удалено файлов: {result.Count}";
-
-                foreach (var deletedId in result)
+                var (result, error) = await _fileService.DeleteFilesAsync(ids); // новый метод
+                if (result == null)
                 {
-                    var file = Files.FirstOrDefault(f => f.Id == deletedId);
-                    if (file != null)
-                        Files.Remove(file);
+                    StatusMessage = error;
+                    return;
+                }
+                else
+                {
+                    StatusMessage = $"Удалено файлов: {result.Count}";
                 }
             }
             catch (Exception ex)
@@ -204,7 +242,12 @@ namespace FileCloud.Desktop.ViewModels
             if (path == null || !File.Exists(path))
             {
                 var folderPath = DownloadSettings.DownloadPath;
-                var newName = await _fileService.DownloadFileAsync(file.Id, folderPath);
+                var (newName, error) = await _fileService.DownloadFileAsync(file.Id, folderPath);
+                if(newName == null)
+                {
+                    StatusMessage = error;
+                    return;
+                }
                 path = Path.Combine(folderPath, newName);
             }
 
