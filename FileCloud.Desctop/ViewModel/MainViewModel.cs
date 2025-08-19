@@ -32,6 +32,9 @@ namespace FileCloud.Desktop.ViewModels
 
         public ICommand LoadFilesCommand { get; }
         public ICommand UploadFilesCommand { get; }
+        public ICommand UpdateFileCommand { get; }
+        public ICommand RenameFileCommand { get; }
+        public ICommand MoveFileCommand { get; }
         public ICommand SaveFilesCommand { get; }
         public ICommand DeleteFilesCommand { get; }
         public ICommand FileOpenCommand { get; }
@@ -51,6 +54,7 @@ namespace FileCloud.Desktop.ViewModels
 
             LoadFilesCommand = new RelayCommand(async _ => await LoadFiles());
             UploadFilesCommand = new RelayCommand(async _ => await UploadFiles());
+            UpdateFileCommand = new RelayCommand(async _ => await UpdateFile());
             SaveFilesCommand = new RelayCommand(async _ => await SaveFiles());
             DeleteFilesCommand = new RelayCommand(async _ => await DeleteFiles());
             FileOpenCommand = new RelayCommand(async param =>
@@ -177,6 +181,16 @@ namespace FileCloud.Desktop.ViewModels
             var (result, error) = await _fileService.UploadFilesAsync("uploads", dialog.FileNames);
             StatusMessage = error == string.Empty ? result : error;
             //await LoadFiles();
+        }
+        private async Task UpdateFile()
+        {
+            FileViewModel file = SelectedFiles.First();
+            if (file == null)
+            {
+                StatusMessage = "Выберите файл";
+                return;
+            }
+             await _fileService.UpdateFileAsync(file.Id, "newName.png", "newPath");
         }
         private async Task SaveFiles()
         {

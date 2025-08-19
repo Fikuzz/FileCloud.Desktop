@@ -3,6 +3,8 @@ using FileCloud.Desktop.Models;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
 using System.Windows.Media;
 
 namespace FileCloud.Desktop.Services
@@ -37,6 +39,9 @@ namespace FileCloud.Desktop.Services
 
             return (await _client.GetFromJsonAsync<List<FileModel>>("/api/file"), string.Empty);
         }
+        /// <summary>
+        /// Получить файл оп id.
+        /// </summary>
         public async Task<(FileModel? result, string? error)> GetFileByIdAsync(Guid id)
         {
             var conect = IsServerActive();
@@ -48,7 +53,7 @@ namespace FileCloud.Desktop.Services
         /// <summary>
         /// Загрузить несколько файлов на сервер.
         /// </summary>
-        public async Task<(string? result, string error)> UploadFilesAsync(string path, IEnumerable<string> filePaths)
+        public async Task<(string? result, string? error)> UploadFilesAsync(string path, IEnumerable<string> filePaths)
         {
             var conect = IsServerActive();
             if (!conect.isActive)
@@ -67,6 +72,34 @@ namespace FileCloud.Desktop.Services
             response.EnsureSuccessStatusCode();
 
             return (await response.Content.ReadAsStringAsync(), string.Empty);
+        }
+        /// <summary>
+        /// Изменить файл.
+        /// </summary>
+        public async Task<(string? result, string? error)> UpdateFileAsync(Guid id, string newName, string newPath)
+        {
+            try
+            {
+                var conect = IsServerActive();
+                if (!conect.isActive)
+                    return (null, conect.error);
+                var dto = new
+                {
+                    name = newName,
+                    path = newPath
+                };
+
+                var json = JsonSerializer.Serialize(dto);
+                using var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await _client.PatchAsync($"/api/file/{id}", content);
+                response.EnsureSuccessStatusCode();
+
+                return (await response.Content.ReadAsStringAsync(), string.Empty);
+            }
+            catch(Exception ex)
+            {
+                return (null, ex.Message);
+            }
         }
 
         /// <summary>
