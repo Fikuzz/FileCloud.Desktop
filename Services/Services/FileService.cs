@@ -1,22 +1,27 @@
 ﻿using FileCloud.Desktop.Models.Models;
-using FileCloud.Desktop.Models.Response;
+using FileCloud.Desktop.Models.Responses;
 using System.Net.Http.Json;
 using Microsoft.Extensions.Logging;
 using FileCloud.Desktop.Models.Requests;
 using FileCloud.Desktop.Helpers;
+using FileCloud.Desktop.Services.Services;
+using FileCloud.Desktop.Services.Configurations;
+using FileCloud.Desktop.Models;
 
 namespace FileCloud.Desktop.Services
 {
     public class FileService
     {
+        private readonly string _apiSubUrl = "/api/file";
+
         private readonly HttpClient _client;
         private readonly ILogger<FileService> _logger;
-        public FileService(string apiBaseUrl, ILogger<FileService> logger)
+        public FileService(IAppSettingsService settings, ILogger<FileService> logger)
         {
             _logger = logger;
             _client = new HttpClient
             {
-                BaseAddress = new Uri(apiBaseUrl)
+                BaseAddress = new Uri(settings.ApiBaseUrl)
             };
         }
         /// <summary>
@@ -26,7 +31,7 @@ namespace FileCloud.Desktop.Services
         {
             return await ServerStateService.ExecuteIfServerActive<List<FileModel>>(_logger, async () =>
             {
-                var result = await _client.GetFromJsonAsync<List<FileResponse>>("");
+                var result = await _client.GetFromJsonAsync<List<ApiResult<FileModel>>>("");
 
                 if (result == null || result.Count == 0)
                     return new List<FileModel>();
@@ -36,17 +41,17 @@ namespace FileCloud.Desktop.Services
                     _logger.LogError("Ошибка при получении файла: {Error}", r.Error);
 
                 return result
-                    .Where(r => r.File != null)
-                    .Select(r => r.File!)
+                    .Where(r => r.Error == null)
+                    .Select(r => r.Response!)
                     .ToList();
             });
         }
         /// <summary>
         /// Загрузить несколько файлов на сервер.
         /// </summary>
-        public async Task<string> UploadFileAsync(Guid folderId, string filePath)
+        public async Task<FileModel> UploadFileAsync(Guid folderId, string filePath)
         {
-            return await ServerStateService.ExecuteIfServerActive<string>(_logger, async () =>
+            return await ServerStateService.ExecuteIfServerActive<FileModel>(_logger, async () =>
             {
                 if (!File.Exists(filePath))
                 {
@@ -63,9 +68,10 @@ namespace FileCloud.Desktop.Services
                 };
 
                 var fileContent = new StreamContent(uploadRequest.Stream);
-                content.Add(fileContent, "files", uploadRequest.Name);
+                content.Add(new StringContent(uploadRequest.FolderId.ToString()), "folderId");
+                content.Add(fileContent, "file", uploadRequest.Name);
 
-                var response = await _client.PostAsync($"/stream-upload?folderId={folderId}", content);
+                var response = await _client.PostAsync($"{_apiSubUrl}/stream-upload", content);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -75,16 +81,21 @@ namespace FileCloud.Desktop.Services
                 }
 
                 // Считываем результат сервера
-                var serverResult = await response.Content.ReadAsStringAsync();
-                return serverResult;
+                var serverResult = await response.Content.ReadFromJsonAsync<ApiResult<FileModel>>();
+                if(serverResult.Error != null)
+                {
+                    _logger.LogError($"Error: {serverResult.Error}");
+                    throw new HttpRequestException(serverResult.Error);
+                }
+                return serverResult.Response;
             });
         }
         /// <summary>
         /// Удалить файл по идентификатору.
         /// </summary>
-        public async Task<string> DeleteFileAsync(Guid fileId)
+        public async Task<DeleteFileResponse> DeleteFileAsync(Guid fileId)
         {
-            return await ServerStateService.ExecuteIfServerActive<string>(_logger, async () =>
+            return await ServerStateService.ExecuteIfServerActive<DeleteFileResponse>(_logger, async () =>
             {
                 var response = await _client.DeleteAsync($"/delete/{fileId}");
                 if (!response.IsSuccessStatusCode)
@@ -95,8 +106,13 @@ namespace FileCloud.Desktop.Services
                 }
 
                 // Считываем результат сервера
-                var serverResult = await response.Content.ReadAsStringAsync();
-                return serverResult;
+                var serverResult = await response.Content.ReadFromJsonAsync<ApiResult<DeleteFileResponse>>();
+                if(serverResult.Error != null)
+                {
+                    _logger.LogError($"Error: {serverResult.Error}");
+                    throw new HttpRequestException(serverResult.Error);
+                }
+                return serverResult.Response;
             });
         }
 

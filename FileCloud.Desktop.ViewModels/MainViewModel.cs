@@ -1,11 +1,14 @@
-﻿using FileCloud.Desktop.Commands;
-using FileCloud.Desktop.Models.Models;
+﻿using FileCloud.Desktop.Models.Models;
 using FileCloud.Desktop.Services;
 using FileCloud.Desktop.Services.Configurations;
+using FileCloud.Desktop.Services.Services;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using FileCloud.Desktop.Commands;
+using FileCloud.Desktop.ViewModels.Helpers;
+using Microsoft.Extensions.Logging;
 
 namespace FileCloud.Desktop.ViewModels
 {
@@ -17,13 +20,16 @@ namespace FileCloud.Desktop.ViewModels
         private readonly FileService _fileService;
         private readonly FolderService _folderService;
         private readonly SyncService _syncService;
+        private readonly PreviewHelper _previewHelper;
         private readonly IAppSettingsService _settings;
+        private readonly IFileDialogService _dialogService;
+        private readonly ILogger<MainViewModel> _logger;
 
         // ----------------------
         // Данные для UI
         // ----------------------
-        public ObservableCollection<FileViewModel> Files { get; } = new();
-        public ObservableCollection<FileViewModel> SelectedFiles { get; } = new();
+        public ObservableCollection<ItemViewModel> Items { get; } = new();
+        public ObservableCollection<ItemViewModel> SelectedItem{ get; } = new();
         public List<Guid> FolderPath { get; } = new(); // навигация по папкам
 
         private string _statusMessage = string.Empty;
@@ -52,12 +58,15 @@ namespace FileCloud.Desktop.ViewModels
         // ----------------------
         // Конструктор
         // ----------------------
-        public MainViewModel(FileService fileService, FolderService folderService, SyncService syncService, IAppSettingsService settings)
+        public MainViewModel(FileService fileService, FolderService folderService, SyncService syncService, PreviewHelper previewHelper, IAppSettingsService settings, IFileDialogService dialogService, ILogger<MainViewModel> logger)
         {
             _fileService = fileService;
             _folderService = folderService;
             _syncService = syncService;
             _settings = settings;
+            _dialogService = dialogService;
+            _previewHelper = previewHelper;
+            _logger = logger;
 
             FolderPath.Add(_settings.RootFolderId);
 
@@ -91,9 +100,58 @@ namespace FileCloud.Desktop.ViewModels
         // ----------------------
         private async Task GetFolderChilds()
         {
-            var childs = await _folderService.
+            Items.Clear();
+
+            try
+            {
+                var childs = await _folderService.GetFolderContentAsync(_settings.RootFolderId);
+                List<ItemViewModel> items = childs.Folders
+                    .Select(f => new FolderViewModel(f))
+                    .Cast<ItemViewModel>()
+                    .ToList();
+                items.AddRange(childs.Files
+                    .Select(f => new FileViewModel(f))
+                    .Cast<ItemViewModel>()
+                    .ToList());
+
+                foreach (var item in items)
+                {
+                    try
+                    {
+                        await _previewHelper.SetPreview(item);
+                    }
+                    catch (Exception ex){
+                        _logger.LogError(ex.Message);
+                    }
+                    Items.Add(item);
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = ex.Message;
+            }
         }
-        private Task UploadFile() => throw new NotImplementedException();
+        private async Task UploadFile()
+        {
+            var files = _dialogService.OpenFiles(string.Empty);
+            if (files == null || files.Length == 0)
+            {
+                StatusMessage = "Файл не выбран";
+                return;
+            }
+
+            try
+            {
+                foreach (var file in files)
+                {
+                    await _fileService.UploadFileAsync(FolderPath.Last(), file);
+                }
+            }
+            catch(Exception ex)
+            {
+                StatusMessage = ex.Message;
+            }
+        }
         private Task CreateFolder() => throw new NotImplementedException();
         private Task DeleteFile() => throw new NotImplementedException();
         private Task DeleteFolder() => throw new NotImplementedException();
@@ -115,7 +173,10 @@ namespace FileCloud.Desktop.ViewModels
         // ----------------------
         private void OnFileReceived(FileModel file) => throw new NotImplementedException();
         private void OnFileDeleted(Guid id) => throw new NotImplementedException();
-        private void OnServerStateChanged(bool isActive, string description) => throw new NotImplementedException();
+        private void OnServerStateChanged(string description)
+        {
+            StatusMessage = description;
+        }
 
         // ----------------------
         // INotifyPropertyChanged

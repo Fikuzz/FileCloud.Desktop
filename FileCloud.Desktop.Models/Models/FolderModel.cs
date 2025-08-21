@@ -1,8 +1,7 @@
 ﻿namespace FileCloud.Desktop.Models
 {
-    public class FolderModel
-    {
-        public Guid Id { get; set; }
-        public required string Name { get; set; }
-    }
+    public record FolderModel(
+        Guid Id,
+        string Name,
+        Guid? ParentId);
 }

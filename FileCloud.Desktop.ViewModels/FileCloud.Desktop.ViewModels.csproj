@@ -10,8 +10,4 @@
     <ProjectReference Include="..\Services\FileCloud.Desktop.Services.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Helpers\" />
-  </ItemGroup>
-
 </Project>

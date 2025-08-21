@@ -1,5 +1,8 @@
 ﻿using FileCloud.Desktop.Models;
 using FileCloud.Desktop.Models.Models;
+using FileCloud.Desktop.Models.Responses;
+using FileCloud.Desktop.Services.Configurations;
+using FileCloud.Desktop.Services.Services;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 
@@ -7,34 +10,41 @@ namespace FileCloud.Desktop.Services
 {
     public class FolderService
     {
+        private readonly string _apiSubUrl = "/api/folder";
+
         private readonly HttpClient _client;
         private readonly ILogger<FolderService> _logger;
 
-        public FolderService(string apiBaseUrl, ILogger<FolderService> logger)
+        public FolderService(IAppSettingsService settings, ILogger<FolderService> logger)
         {
             _logger = logger;
             _client = new HttpClient
             {
-                BaseAddress = new Uri(apiBaseUrl)
+                BaseAddress = new Uri(settings.ApiBaseUrl)
             };
         }
 
         /// <summary>
         /// Получить список папок внутри родительской папки
         /// </summary>
-        public async Task<List<FolderModel>> GetFoldersAsync(Guid parentId)
+        public async Task<ContentResponse> GetFolderContentAsync(Guid id)
         {
-            return await ServerStateService.ExecuteIfServerActive<List<FolderModel>>(_logger, async () =>
+            return await ServerStateService.ExecuteIfServerActive<ContentResponse>(_logger, async () =>
             {
-                var response = await _client.GetAsync($"/{parentId}/childs");
+                var response = await _client.GetAsync($"{_apiSubUrl}/{id}/childs");
                 if (!response.IsSuccessStatusCode)
                 {
                     var error = await response.Content.ReadAsStringAsync();
                     _logger.LogError(error);
                     throw new HttpRequestException($"Ошибка при получении папок: {error}");
                 }
-
-                return await response.Content.ReadFromJsonAsync<List<FolderModel>>() ?? new List<FolderModel>();
+                var apiResult = await response.Content.ReadFromJsonAsync<ApiResult<ContentResponse>>();
+                if( apiResult.Error != null)
+                {
+                    _logger.LogError($"Error: {apiResult.Error}");
+                    throw new HttpRequestException(apiResult.Error);
+                }
+                return apiResult.Response;
             }); 
         }
 

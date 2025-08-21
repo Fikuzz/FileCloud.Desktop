@@ -13,7 +13,7 @@ public class AppSettingsService : IAppSettingsService
         _logger = logger;
         _logger.LogInformation("AppSettingsService создан");
     }
-
+    public string AppBasePath => Environment.CurrentDirectory;
     public string ApiBaseUrl => _config["ServerSettings:ApiBaseUrl"];
 
     public string DownloadPath => _config["DownloadSettings:DownloadPath"]

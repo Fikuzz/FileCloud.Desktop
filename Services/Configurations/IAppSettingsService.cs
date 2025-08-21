@@ -8,6 +8,7 @@ namespace FileCloud.Desktop.Services.Configurations
 {
     public interface IAppSettingsService
     {
+        string AppBasePath { get; }
         string ApiBaseUrl { get; }
         string DownloadPath { get; }
         Guid RootFolderId { get; }

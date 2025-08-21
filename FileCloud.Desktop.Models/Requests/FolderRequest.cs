@@ -1,8 +1,9 @@
-﻿namespace FileCloud.Desktop.Models.Requests
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace FileCloud.Desktop.Models.Requests
 {
-    public class FolderRequest
-    {
-        public required string Name { get; set; }
-        public Guid ParentId { get; set; }
-    }
+    public record FolderRequest(
+        [Required]
+        string Name,
+        Guid? parentId);
 }

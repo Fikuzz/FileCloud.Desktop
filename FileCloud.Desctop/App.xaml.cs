@@ -1,12 +1,16 @@
 ﻿using FileCloud.Desktop;
 using FileCloud.Desktop.Services;
 using FileCloud.Desktop.Services.Configurations;
+using FileCloud.Desktop.Services.Services;
+using FileCloud.Desktop.View.Helpers;
 using FileCloud.Desktop.ViewModels;
+using FileCloud.Desktop.ViewModels.Helpers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Windows;
 
+namespace FileCloud.Desktop.View;
 public partial class App : Application
 {
     public IServiceProvider ServiceProvider { get; private set; }
@@ -41,12 +45,15 @@ public partial class App : Application
             .SetBasePath(AppDomain.CurrentDomain.BaseDirectory) // папка с exe
             .AddJsonFile("appsettings.json", optional: false)
             .Build();
-        services.AddSingleton(config);
+        services.AddSingleton<IConfiguration>(config);
 
         // Сервисы
         services.AddSingleton<IAppSettingsService, AppSettingsService>();
+        services.AddScoped<IFileDialogService, FileDialogService>();
+        services.AddSingleton<SyncService>();
         services.AddSingleton<FileService>();
         services.AddSingleton<FolderService>();
+        services.AddScoped<PreviewHelper>();
 
         // ViewModels
         services.AddSingleton<MainViewModel>();

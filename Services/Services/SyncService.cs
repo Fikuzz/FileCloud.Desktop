@@ -1,23 +1,20 @@
 ﻿using FileCloud.Desktop.Models.Models;
-using FileCloud.Desktop.Services;
-using FileCloud.Desktop.ViewModels;
+using FileCloud.Desktop.Services.Configurations;
 using Microsoft.AspNetCore.SignalR.Client;
 
-namespace FileCloud.Desktop.Services;
+namespace FileCloud.Desktop.Services.Services;
 public class SyncService
 {
-    private readonly FileService _fileService;
     private readonly HubConnection _connection;
 
     public event Action<FileModel> FileReceived;
     public event Action<Guid> FileDeleted;
-    public event Action<bool, string> ServerState;
+    public event Action<string> ServerState;
 
-    public SyncService(string baseUrl)
+    public SyncService(IAppSettingsService settings)
     {
-        _fileService = new FileService(baseUrl);
         _connection = new HubConnectionBuilder()
-            .WithUrl($"{baseUrl}/fileHub")
+            .WithUrl($"{settings.ApiBaseUrl}/fileHub")
             .WithAutomaticReconnect()
             .Build();
     }
@@ -26,36 +23,36 @@ public class SyncService
     {
         _connection.On<string>("FileLoaded", async (fileId) =>
         {
-            var guid = Guid.Parse(fileId);
-            var (fileModel, error) = await _fileService.GetFileByIdAsync(guid);
-            if(fileModel != null)
-                FileReceived?.Invoke(fileModel);
+            //var guid = Guid.Parse(fileId);
+            //var apiResult = await _fileService.GetFileByIdAsync(guid);
+            //if (fileModel != null)
+            //    FileReceived?.Invoke(fileModel);
         });
 
         _connection.On<string>("FileDeleted", (fileId) =>
         {
-            var guid = Guid.Parse(fileId);
-            FileDeleted?.Invoke(guid);
+            //var guid = Guid.Parse(fileId);
+            //FileDeleted?.Invoke(guid);
         });
 
         _connection.Closed += (error) =>
         {
-            _fileService.ServerState = false;
-            ServerState?.Invoke(false, "Соединение закрыто. Переподключение...");
+            //_fileService.ServerState = false;
+            //ServerState?.Invoke(false, "Соединение закрыто. Переподключение...");
             return Task.CompletedTask;
         };
 
         _connection.Reconnecting += (error) =>
         {
-            _fileService.ServerState = false;
-            ServerState?.Invoke(false, "Пытаюсь переподключиться...");
+            //_fileService.ServerState = false;
+            //ServerState?.Invoke(false, "Пытаюсь переподключиться...");
             return Task.CompletedTask;
         };
 
         _connection.Reconnected += (connectionId) =>
         {
-            _fileService.ServerState = true;
-            ServerState?.Invoke(true, "Переподключился!");
+            //_fileService.ServerState = true;
+            //ServerState?.Invoke(true, "Переподключился!");
             return Task.CompletedTask;
         };
     }
@@ -68,15 +65,15 @@ public class SyncService
             {
                 await _connection.StartAsync();
                 await _connection.InvokeAsync("Ping");
-                _fileService.ServerState = true;
-                ServerState?.Invoke(true, "Сервер доступен");
+                ServerStateService.SetServerState(true);
+                ServerState?.Invoke("Сервер доступен");
                 Start();
                 return;
             }
             catch
             {
-                _fileService.ServerState = false;
-                ServerState?.Invoke(false, "Сервер не отвечает");
+                ServerStateService.SetServerState(false);
+                ServerState?.Invoke("Сервер не отвечает");
             }
 
             await Task.Delay(intervalMs);

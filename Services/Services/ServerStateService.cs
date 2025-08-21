@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace FileCloud.Desktop.Services
+namespace FileCloud.Desktop.Services.Services
 {
     public static class ServerStateService
     {
