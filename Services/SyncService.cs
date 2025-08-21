@@ -1,9 +1,10 @@
-﻿using FileCloud.Desktop.Models;
+﻿using FileCloud.Desktop.Models.Models;
 using FileCloud.Desktop.Services;
 using FileCloud.Desktop.ViewModels;
 using Microsoft.AspNetCore.SignalR.Client;
 
-public class FileSyncService
+namespace FileCloud.Desktop.Services;
+public class SyncService
 {
     private readonly FileService _fileService;
     private readonly HubConnection _connection;
@@ -12,7 +13,7 @@ public class FileSyncService
     public event Action<Guid> FileDeleted;
     public event Action<bool, string> ServerState;
 
-    public FileSyncService(string baseUrl)
+    public SyncService(string baseUrl)
     {
         _fileService = new FileService(baseUrl);
         _connection = new HubConnectionBuilder()

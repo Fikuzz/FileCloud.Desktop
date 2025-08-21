@@ -1,4 +1,6 @@
-﻿using FileCloud.Desktop.ViewModels;
+﻿using FileCloud.Desktop.Services.Configurations;
+using FileCloud.Desktop.ViewModels;
+using Microsoft.Extensions.Configuration;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -17,10 +19,10 @@ namespace FileCloud.Desktop
     /// </summary>
     public partial class MainWindow : Window
     {
-        public MainWindow()
+        public MainWindow(MainViewModel viewModel)
         {
             InitializeComponent();
-            DataContext = new MainViewModel();
+            DataContext = viewModel;
         }
     }
 }

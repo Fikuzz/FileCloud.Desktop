@@ -1,0 +1,196 @@
+﻿using FileCloud.Desktop.Models.Models;
+using FileCloud.Desktop.Models.Response;
+using System.Net.Http.Json;
+using Microsoft.Extensions.Logging;
+using FileCloud.Desktop.Models.Requests;
+using FileCloud.Desktop.Helpers;
+
+namespace FileCloud.Desktop.Services
+{
+    public class FileService
+    {
+        private readonly HttpClient _client;
+        private readonly ILogger<FileService> _logger;
+        public FileService(string apiBaseUrl, ILogger<FileService> logger)
+        {
+            _logger = logger;
+            _client = new HttpClient
+            {
+                BaseAddress = new Uri(apiBaseUrl)
+            };
+        }
+        /// <summary>
+        /// Получить список всех файлов.
+        /// </summary>
+        public async Task<List<FileModel>> GetFilesAsync()
+        {
+            return await ServerStateService.ExecuteIfServerActive<List<FileModel>>(_logger, async () =>
+            {
+                var result = await _client.GetFromJsonAsync<List<FileResponse>>("");
+
+                if (result == null || result.Count == 0)
+                    return new List<FileModel>();
+
+                // Логирование ошибок
+                foreach (var r in result.Where(r => r.Error != null))
+                    _logger.LogError("Ошибка при получении файла: {Error}", r.Error);
+
+                return result
+                    .Where(r => r.File != null)
+                    .Select(r => r.File!)
+                    .ToList();
+            });
+        }
+        /// <summary>
+        /// Загрузить несколько файлов на сервер.
+        /// </summary>
+        public async Task<string> UploadFileAsync(Guid folderId, string filePath)
+        {
+            return await ServerStateService.ExecuteIfServerActive<string>(_logger, async () =>
+            {
+                if (!File.Exists(filePath))
+                {
+                    _logger.LogError("Файл не найден");
+                    throw new FileNotFoundException($"Файл по пути {filePath} не найден");
+                }
+
+                using var content = new MultipartFormDataContent();
+                FileUploadRequest uploadRequest = new FileUploadRequest()
+                {
+                    Name = Path.GetFileName(filePath),
+                    Stream = File.OpenRead(filePath),
+                    FolderId = folderId
+                };
+
+                var fileContent = new StreamContent(uploadRequest.Stream);
+                content.Add(fileContent, "files", uploadRequest.Name);
+
+                var response = await _client.PostAsync($"/stream-upload?folderId={folderId}", content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var serverError = await response.Content.ReadAsStringAsync();
+                    _logger.LogError(serverError);
+                    throw new HttpRequestException($"Ошибка сервера: {serverError}");
+                }
+
+                // Считываем результат сервера
+                var serverResult = await response.Content.ReadAsStringAsync();
+                return serverResult;
+            });
+        }
+        /// <summary>
+        /// Удалить файл по идентификатору.
+        /// </summary>
+        public async Task<string> DeleteFileAsync(Guid fileId)
+        {
+            return await ServerStateService.ExecuteIfServerActive<string>(_logger, async () =>
+            {
+                var response = await _client.DeleteAsync($"/delete/{fileId}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    var serverError = await response.Content.ReadAsStringAsync();
+                    _logger.LogError(serverError);
+                    throw new HttpRequestException($"Ошибка сервера: {serverError}");
+                }
+
+                // Считываем результат сервера
+                var serverResult = await response.Content.ReadAsStringAsync();
+                return serverResult;
+            });
+        }
+
+        /// <summary>
+        /// Получить превью изображения по идентификатору.
+        /// </summary>
+        public async Task<byte[]> GetPreviewAsync(Guid id)
+        {
+            return await ServerStateService.ExecuteIfServerActive<byte[]>(_logger, async () =>
+            {
+                var response = await _client.GetAsync($"/api/file/preview/{id}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    var serverError = await response.Content.ReadAsStringAsync();
+                    _logger.LogError(serverError);
+                    throw new HttpRequestException($"Ошибка сервера: {serverError}");
+                }
+
+                var bytes = await response.Content.ReadAsByteArrayAsync();
+
+                return bytes;
+            });
+        }
+        /// <summary>
+        /// Загрузить файл по идентификатору.
+        /// </summary>
+        public async Task<string> DownloadFilAsync(Guid id, string folder)
+        {
+            return await ServerStateService.ExecuteIfServerActive<string>(_logger, async () =>
+            {
+                var response = await _client.GetAsync($"/download/{id}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    var serverError = await response.Content.ReadAsStringAsync();
+                    _logger.LogError(serverError);
+                    throw new HttpRequestException($"Ошибка сервера: {serverError}");
+                }
+
+                var contentDisposition = response.Content.Headers.ContentDisposition;
+                if (response.Content.Headers.ContentDisposition == null)
+                    _logger.LogWarning("Content-Disposition отсутствует, используется имя по умолчанию");
+
+                var fileName = contentDisposition?.FileName?.Trim('"') ?? "new_file";
+
+                var newName = ScriptHelper.Rename(fileName);
+
+                var fileBytes = await response.Content.ReadAsByteArrayAsync();
+                var savePath = Path.Combine(folder, newName);
+
+                await File.WriteAllBytesAsync(savePath, fileBytes);
+
+                FileMappingManager.AddOrUpdate(id, savePath);
+                return newName;
+            });
+        }
+        /// <summary>
+        /// Переименование файла
+        /// </summary>
+        public async Task<string> RenameFileAsync(Guid id, string newName)
+        {
+            return await ServerStateService.ExecuteIfServerActive<string>(_logger, async () =>
+            {
+                var request = new { newName = newName };
+                var response = await _client.PutAsJsonAsync($"/rename/{id}", request);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var serverError = await response.Content.ReadAsStringAsync();
+                    _logger.LogError(serverError);
+                    throw new HttpRequestException($"Ошибка сервера: {serverError}");
+                }
+
+                var serverResult = await response.Content.ReadAsStringAsync();
+                return serverResult;
+            });
+        }
+        /// <summary>
+        /// Переимещение файла
+        /// </summary>
+        public async Task<string> MoveFileAsync(Guid id, Guid newFolder)
+        {
+            return await ServerStateService.ExecuteIfServerActive<string>(_logger, async () =>
+            {
+                var request = new { newFolder = newFolder };
+                var response = await _client.PutAsJsonAsync($"/move/{id}", request);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var serverError = await response.Content.ReadAsStringAsync();
+                    _logger.LogError(serverError);
+                    throw new HttpRequestException($"Ошибка сервера: {serverError}");
+                }
+
+                var serverResult = await response.Content.ReadAsStringAsync();
+                return serverResult;
+            });
+        }
+    }
+}

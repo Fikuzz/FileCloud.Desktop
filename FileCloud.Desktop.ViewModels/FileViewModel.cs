@@ -1,7 +1,6 @@
-﻿using FileCloud.Desktop.Models;
+﻿using FileCloud.Desktop.Models.Models;
 using System;
 using System.IO;
-using System.Windows.Media;
 
 namespace FileCloud.Desktop.ViewModels
 {
@@ -9,15 +8,13 @@ namespace FileCloud.Desktop.ViewModels
     {
         public Guid Id { get; set; }
         public string? Name { get; set; }
-        public string? Path { get; set; }
         public string? PreviewPath { get; set; }
-        public ImageSource? PreviewImage { get; set; }
+        public byte[]? PreviewImage { get; set; }
 
         public FileViewModel(FileModel dto)
         {
             Id = dto.Id;
             Name = dto.Name;
-            Path = dto.Path;
         }
 
         public bool HasImagePreview => PreviewImage != null;
