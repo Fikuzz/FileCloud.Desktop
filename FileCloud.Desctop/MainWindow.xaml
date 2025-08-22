@@ -6,78 +6,79 @@
         xmlns:local="clr-namespace:FileCloud.Desktop"
         xmlns:helpers="clr-namespace:FileCloud.Desktop.Helpers"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:vm="clr-namespace:FileCloud.Desktop.ViewModels;assembly=FileCloud.Desktop.ViewModels"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <FrameworkElement.Resources>
-            <ResourceDictionary>
-                <Style
+        <ResourceDictionary>
+            <Style
 				TargetType="{x:Type Button}"
 				x:Key="{x:Type Button}">
-                    <Setter
+                <Setter
 					Property="Margin"
 					Value="5" />
-                    <Setter
+                <Setter
 					Property="Padding"
 					Value="10,5" />
-                    <Setter
+                <Setter
 					Property="FontWeight"
 					Value="SemiBold" />
-                </Style>
-                <Style
+            </Style>
+            <Style
 				TargetType="{x:Type TextBlock}"
 				x:Key="{x:Type TextBlock}">
-                    <Setter
+                <Setter
 					Property="FontSize"
 					Value="14" />
-                    <Setter
+                <Setter
 					Property="TextWrapping"
 					Value="Wrap" />
-                </Style>
-            </ResourceDictionary>
-        </FrameworkElement.Resources>
-        <DockPanel>
-            <Border
+            </Style>
+        </ResourceDictionary>
+    </FrameworkElement.Resources>
+    <DockPanel>
+        <Border
 			DockPanel.Dock="Top"
 			Background="#FF2C3E50"
 			Padding="10">
-                <DockPanel>
-                    <TextBlock
+            <DockPanel>
+                <TextBlock
 					Text="👤 Гость"
 					Foreground="#FFFFFFFF"
 					FontSize="16"
 					FontWeight="Bold" />
-                </DockPanel>
-            </Border>
-            <StatusBar
+            </DockPanel>
+        </Border>
+        <StatusBar
 			DockPanel.Dock="Bottom">
-                <StatusBarItem>
-                    <TextBlock
+            <StatusBarItem>
+                <TextBlock
 					Name="StatusBarText"
 					Text="{Binding StatusMessage}" />
-                </StatusBarItem>
-            </StatusBar>
-            <DockPanel>
-                <DockPanel
+            </StatusBarItem>
+        </StatusBar>
+        <DockPanel>
+            <DockPanel
 				Dock="Left"
 				Width="200"
 				Background="#FFF0F0F0">
-                    <Button
+                <Button
 					Content="Обновить"
 					DockPanel.Dock="Bottom"
-					Command="{Binding LoadFolderChildsCommand}" />
-                    <StackPanel>
-                        <Button
+					Command="{Binding LoadFolderChildsCommand}"/>
+                <StackPanel>
+                    <Button
 						Content="📤 Загрузить файл"
 						Command="{Binding UploadFileCommand}" />
-                        <Button
+                    <Button
 						Content="📥 Скачать файл"
 						Command="{Binding SaveFilesCommand}" />
-                        <Button
+                    <Button
 						Content="❌ Удалить файл"
 						Command="{Binding DeleteFilesCommand}" />
-                    </StackPanel>
-                </DockPanel>
-                <ScrollViewer
+                </StackPanel>
+            </DockPanel>
+            <ScrollViewer
 				VerticalScrollBarVisibility="Auto"
 				HorizontalScrollBarVisibility="Disabled">
                 <ListBox
@@ -90,31 +91,103 @@
 					ScrollViewer.VerticalScrollBarVisibility="Auto"
 					ItemsSource="{Binding Items}"
 					helpers:ListBoxSelectedItemsBinding.BindableSelectedItems="{Binding SelectedFiles}" d:ItemsSource="{d:SampleData ItemCount=5}" BorderBrush="#FF909090">
+                    <!-- В каждый ListBoxItem положим ссылку на MainViewModel через Tag -->
                     <ListBox.ItemContainerStyle>
                         <Style TargetType="ListBoxItem">
                             <Setter Property="Tag" Value="{Binding DataContext, ElementName=lb_Files}"/>
-                            <Setter Property="ContextMenu">
-                                <Setter.Value>
-                                    <ContextMenu DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
-                                        <MenuItem Header="Open"
-                                            Command="{Binding FileOpenCommand}"
-                                            CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}, Path=PlacementTarget.DataContext}"/>
-                                        <MenuItem Header="Save"
-                                            Command="{Binding SaveFilesCommand}"/>
-                                        <MenuItem Header="Edit"
-                                            Command="{Binding UpdateFileCommand}"/>
-                                        <Separator/>
-                                        <MenuItem Header="Refresh"
-                                            Command="{Binding LoadFilesCommand}"/>
-                                        <Separator/>
-                                        <MenuItem Header="Delete"
-                                            Command="{Binding DeleteFilesCommand}"
-                                            CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}, Path=PlacementTarget.DataContext}"/>
-                                    </ContextMenu>
-                                </Setter.Value>
-                            </Setter>
                         </Style>
                     </ListBox.ItemContainerStyle>
+                    <ListBox.Resources>
+                        <!-- Шаблон для файлов -->
+                        <DataTemplate DataType="{x:Type vm:FileViewModel}">
+                            <StackPanel>
+                                <StackPanel.InputBindings>
+                                    <MouseBinding MouseAction="LeftDoubleClick"
+                                        Command="{Binding PlacementTarget.Tag.FileOpenCommand,
+                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                        CommandParameter="{Binding}" />
+                                </StackPanel.InputBindings>
+
+                                <Border BorderBrush="#CCC" BorderThickness="1" Margin="3"
+                    Width="120" Padding="4" CornerRadius="10">
+                                    <Image Width="100" Height="100">
+                                        <Image.Style>
+                                            <Style TargetType="Image">
+                                                <Setter Property="Source" Value="{Binding PreviewPath}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding PreviewPath}" Value="{x:Null}">
+                                                        <Setter Property="Source" Value="{Binding PreviewImage}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Image.Style>
+                                    </Image>
+                                </Border>
+                                <TextBlock FontWeight="Bold" TextAlignment="Center" Text="{Binding Name}" />
+
+                                <StackPanel.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Open" Command="{Binding FileOpenCommand}" 
+                                                  CommandParameter="{Binding RelativeSource={RelativeSource 
+                                            Mode=FindAncestor, 
+                                            AncestorType=ContextMenu}, 
+                                            Path=PlacementTarget.DataContext}"/>
+                                        <MenuItem Header="Save" 
+                                                  Command="{Binding SaveFilesCommand}"/>
+                                        <MenuItem Header="Edit" 
+                                                  Command="{Binding UpdateFileCommand}"/>
+                                        <Separator/>
+                                        <MenuItem Header="Refresh" 
+                                                  Command="{Binding LoadFilesCommand}"/>
+                                        <Separator/>
+                                        <MenuItem Header="Delete" 
+                                                  Command="{Binding DeleteFilesCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}, Path=PlacementTarget.DataContext}"/>
+                                    </ContextMenu>
+                                </StackPanel.ContextMenu>
+                            </StackPanel>
+                        </DataTemplate>
+
+                        <!-- Шаблон для папок -->
+                        <DataTemplate DataType="{x:Type vm:FolderViewModel}">
+                            <StackPanel>
+                                <StackPanel.InputBindings>
+                                    <MouseBinding MouseAction="LeftDoubleClick"
+                                        Command="{Binding LoadFolderChildsCommand}"
+                                        CommandParameter="{Binding}" />
+                                </StackPanel.InputBindings>
+
+                                <Border BorderBrush="#CCC" BorderThickness="1" Margin="3"
+                                    Width="120" Padding="4" CornerRadius="10">
+                                    <Image Width="100" Height="100">
+                                        <Image.Style>
+                                            <Style TargetType="Image">
+                                                <Setter Property="Source" Value="{Binding PreviewPath}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding PreviewPath}" Value="{x:Null}">
+                                                        <Setter Property="Source" Value="{Binding PreviewImage}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Image.Style>
+                                    </Image>
+                                </Border>
+                                <TextBlock FontWeight="Bold" TextAlignment="Center" Text="{Binding Name}" />
+
+                                <StackPanel.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Open"
+                                            Command="{Binding PlacementTarget.Tag.FileOpenCommand,
+                                            RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                            CommandParameter="{Binding}"/>
+                                        <MenuItem Header="Delete file"
+                                            Command="{Binding PlacementTarget.Tag.DeleteFileCommand,
+                                            RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                            CommandParameter="{Binding}"/>
+                                    </ContextMenu>
+                                </StackPanel.ContextMenu>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.Resources>
                     <ListBox.InputBindings>
                         <KeyBinding Key="Delete"
                             Command="{Binding DeleteFilesCommand}"
@@ -122,54 +195,11 @@
                     </ListBox.InputBindings>
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                                <WrapPanel />
+                            <WrapPanel />
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel>
-                                <StackPanel.InputBindings>
-                                    <MouseBinding MouseAction="LeftDoubleClick"
-                                        Command="{Binding DataContext.FileOpenCommand, RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}"
-                                        CommandParameter="{Binding}" />
-                                </StackPanel.InputBindings>
-                                <Border                                
-								BorderBrush="#CCC"
-								BorderThickness="1"
-								Margin="3"
-								Width="120"
-								Padding="4" CornerRadius="10,10,10,10">
-                                    <Image
-										Width="100"
-										Height="100">
-                                        <FrameworkElement.Style>
-                                            <Style
-												TargetType="{x:Type Image}">
-                                                <Setter
-													Property="Source"
-													Value="{Binding PreviewPath}" />
-                                                <Style.Triggers>
-                                                    <DataTrigger
-														Binding="{Binding PreviewPath}"
-														Value="{x:Null}">
-                                                        <Setter
-															Property="Source"
-															Value="{Binding PreviewImage}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </FrameworkElement.Style>
-                                    </Image>
-                                </Border>
-                                <TextBlock
-                                    FontWeight="Bold"
-                                    TextAlignment="Center"
-                                    Text="{Binding Name}" />
-                            </StackPanel>
-                        </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ListBox>
-                </ScrollViewer>
-            </DockPanel>
+                </ListBox>
+            </ScrollViewer>
         </DockPanel>
+    </DockPanel>
 </Window>
