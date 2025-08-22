@@ -71,7 +71,7 @@ namespace FileCloud.Desktop.ViewModels
             FolderPath.Add(_settings.RootFolderId);
 
             // Привязка команд к методам (RelayCommand или AsyncCommand)
-            LoadFolderChildsCommand = new RelayCommand(async _ => await GetFolderChilds());
+            LoadFolderChildsCommand = new RelayCommand(async param => await GetFolderChilds(param as FolderViewModel));
             UploadFileCommand = new RelayCommand(async _ => await UploadFile());
             CreateFolderCommand = new RelayCommand(async _ => await CreateFolder());
             DeleteFileCommand = new RelayCommand(async _ => await DeleteFile());
@@ -98,13 +98,15 @@ namespace FileCloud.Desktop.ViewModels
         // ----------------------
         // Асинхронные методы для работы с сервером
         // ----------------------
-        private async Task GetFolderChilds()
+        private async Task GetFolderChilds(FolderViewModel? folder)
         {
             Items.Clear();
 
+            Guid folderId = folder != null ? folder.Id : _settings.RootFolderId;
+
             try
             {
-                var childs = await _folderService.GetFolderContentAsync(_settings.RootFolderId);
+                var childs = await _folderService.GetFolderContentAsync(folderId);
                 List<ItemViewModel> items = childs.Folders
                     .Select(f => new FolderViewModel(f))
                     .Cast<ItemViewModel>()
