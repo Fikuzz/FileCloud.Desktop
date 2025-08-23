@@ -1,14 +1,16 @@
-﻿using FileCloud.Desktop.Models.Models;
+﻿using FileCloud.Desktop.Commands;
+using FileCloud.Desktop.Models.Models;
 using FileCloud.Desktop.Services;
 using FileCloud.Desktop.Services.Configurations;
 using FileCloud.Desktop.Services.Services;
+using FileCloud.Desktop.ViewModels.Helpers;
+using Microsoft.Extensions.Logging;
+using Microsoft.VisualBasic;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
-using FileCloud.Desktop.Commands;
-using FileCloud.Desktop.ViewModels.Helpers;
-using Microsoft.Extensions.Logging;
 
 namespace FileCloud.Desktop.ViewModels
 {
@@ -103,12 +105,13 @@ namespace FileCloud.Desktop.ViewModels
             Items.Clear();
 
             Guid folderId = folder != null ? folder.Id : _settings.RootFolderId;
+            FolderPathSet(folderId);
 
             try
             {
-                var childs = await _folderService.GetFolderContentAsync(folderId);
+                var childs = await _folderService.GetFolderContentAsync(FolderPath.Last());
                 List<ItemViewModel> items = childs.Folders
-                    .Select(f => new FolderViewModel(f))
+                    .Select(f => new FolderViewModel(f, _folderService))
                     .Cast<ItemViewModel>()
                     .ToList();
                 items.AddRange(childs.Files
@@ -154,7 +157,10 @@ namespace FileCloud.Desktop.ViewModels
                 StatusMessage = ex.Message;
             }
         }
-        private Task CreateFolder() => throw new NotImplementedException();
+        private Task CreateFolder()
+        {
+            throw new NotImplementedException();
+        }
         private Task DeleteFile() => throw new NotImplementedException();
         private Task DeleteFolder() => throw new NotImplementedException();
         private Task RenameFile() => throw new NotImplementedException();
@@ -169,6 +175,21 @@ namespace FileCloud.Desktop.ViewModels
         // ----------------------
         private Task GetPreview(FileViewModel file) => throw new NotImplementedException();
         private Task OpenFile(FileViewModel file) => throw new NotImplementedException();
+        private void FolderPathSet(Guid id)
+        {
+            var folderIndex = FolderPath.IndexOf(id);
+            if (folderIndex == -1)
+            {
+                FolderPath.Add(id);
+            }
+            else
+            {
+                while (FolderPath.Count > folderIndex + 1)
+                {
+                    FolderPath.RemoveAt(FolderPath.Count - 1);
+                }
+            }
+        }
 
         // ----------------------
         // Методы для FileSyncService

@@ -1,5 +1,6 @@
 ﻿using FileCloud.Desktop.Models;
 using FileCloud.Desktop.Models.Models;
+using FileCloud.Desktop.Models.Requests;
 using FileCloud.Desktop.Models.Responses;
 using FileCloud.Desktop.Services.Configurations;
 using FileCloud.Desktop.Services.Services;
@@ -92,7 +93,7 @@ namespace FileCloud.Desktop.Services
         {
             return await ServerStateService.ExecuteIfServerActive<FolderModel>(_logger, async () =>
             {
-                var response = await _client.PutAsJsonAsync($"/rename", new { Id = folderId, NewName = newName });
+                var response = await _client.PutAsJsonAsync($"{_apiSubUrl}/rename/{folderId}", new RenameFolderRequest(newName));
                 if (!response.IsSuccessStatusCode)
                 {
                     var error = await response.Content.ReadAsStringAsync();
@@ -111,7 +112,7 @@ namespace FileCloud.Desktop.Services
         {
             return await ServerStateService.ExecuteIfServerActive<FolderModel>(_logger, async () =>
             {
-                var response = await _client.PutAsJsonAsync($"/move", new { Id = folderId, NewParentId = newParentId });
+                var response = await _client.PutAsJsonAsync($"{_apiSubUrl}/move/{folderId}", new MoveFolderRequest(newParentId));
                 if (!response.IsSuccessStatusCode)
                 {
                     var error = await response.Content.ReadAsStringAsync();

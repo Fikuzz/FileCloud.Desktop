@@ -7,10 +7,15 @@
         xmlns:helpers="clr-namespace:FileCloud.Desktop.Helpers"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:vm="clr-namespace:FileCloud.Desktop.ViewModels;assembly=FileCloud.Desktop.ViewModels"
+        xmlns:conv="clr-namespace:FileCloud.Desktop.View.Converters"
+        xmlns:behav="clr-namespace:FileCloud.Desktop.View.Behaviors"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
+    <!-- Styles -->
     <FrameworkElement.Resources>
         <ResourceDictionary>
+            <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+            <!--Button style-->
             <Style
 				TargetType="{x:Type Button}"
 				x:Key="{x:Type Button}">
@@ -24,6 +29,7 @@
 					Property="FontWeight"
 					Value="SemiBold" />
             </Style>
+            <!--TextBlock style-->
             <Style
 				TargetType="{x:Type TextBlock}"
 				x:Key="{x:Type TextBlock}">
@@ -37,6 +43,7 @@
         </ResourceDictionary>
     </FrameworkElement.Resources>
     <DockPanel>
+        <!-- Hat -->
         <Border
 			DockPanel.Dock="Top"
 			Background="#FF2C3E50"
@@ -49,6 +56,7 @@
 					FontWeight="Bold" />
             </DockPanel>
         </Border>
+        <!-- Status messages -->
         <StatusBar
 			DockPanel.Dock="Bottom">
             <StatusBarItem>
@@ -58,6 +66,7 @@
             </StatusBarItem>
         </StatusBar>
         <DockPanel>
+            <!-- Buttons panel -->
             <DockPanel
 				Dock="Left"
 				Width="200"
@@ -81,6 +90,7 @@
             <ScrollViewer
 				VerticalScrollBarVisibility="Auto"
 				HorizontalScrollBarVisibility="Disabled">
+                <!-- Item List -->
                 <ListBox
                     x:Name="lb_Files"
 					SelectionMode="Extended"
@@ -97,65 +107,25 @@
                             <Setter Property="Tag" Value="{Binding DataContext, ElementName=lb_Files}"/>
                         </Style>
                     </ListBox.ItemContainerStyle>
+                    <!-- Контекстное меню ListBox -->
+                    <ListBox.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="New folder"
+                                      Command="{Binding CreateFolderCommand}"/>
+                        </ContextMenu>
+                    </ListBox.ContextMenu>
                     <ListBox.Resources>
                         <!-- Шаблон для файлов -->
                         <DataTemplate DataType="{x:Type vm:FileViewModel}">
                             <StackPanel>
+                                <!-- Обработка нажатий мыши\клавиатуры -->
                                 <StackPanel.InputBindings>
                                     <MouseBinding MouseAction="LeftDoubleClick"
                                         Command="{Binding PlacementTarget.Tag.FileOpenCommand,
                                         RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                         CommandParameter="{Binding}" />
                                 </StackPanel.InputBindings>
-
-                                <Border BorderBrush="#CCC" BorderThickness="1" Margin="3"
-                    Width="120" Padding="4" CornerRadius="10">
-                                    <Image Width="100" Height="100">
-                                        <Image.Style>
-                                            <Style TargetType="Image">
-                                                <Setter Property="Source" Value="{Binding PreviewPath}" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding PreviewPath}" Value="{x:Null}">
-                                                        <Setter Property="Source" Value="{Binding PreviewImage}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Image.Style>
-                                    </Image>
-                                </Border>
-                                <TextBlock FontWeight="Bold" TextAlignment="Center" Text="{Binding Name}" />
-
-                                <StackPanel.ContextMenu>
-                                    <ContextMenu>
-                                        <MenuItem Header="Open" Command="{Binding FileOpenCommand}" 
-                                                  CommandParameter="{Binding RelativeSource={RelativeSource 
-                                            Mode=FindAncestor, 
-                                            AncestorType=ContextMenu}, 
-                                            Path=PlacementTarget.DataContext}"/>
-                                        <MenuItem Header="Save" 
-                                                  Command="{Binding SaveFilesCommand}"/>
-                                        <MenuItem Header="Edit" 
-                                                  Command="{Binding UpdateFileCommand}"/>
-                                        <Separator/>
-                                        <MenuItem Header="Refresh" 
-                                                  Command="{Binding LoadFilesCommand}"/>
-                                        <Separator/>
-                                        <MenuItem Header="Delete" 
-                                                  Command="{Binding DeleteFilesCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}, Path=PlacementTarget.DataContext}"/>
-                                    </ContextMenu>
-                                </StackPanel.ContextMenu>
-                            </StackPanel>
-                        </DataTemplate>
-
-                        <!-- Шаблон для папок -->
-                        <DataTemplate DataType="{x:Type vm:FolderViewModel}">
-                            <StackPanel>
-                                <StackPanel.InputBindings>
-                                    <MouseBinding MouseAction="LeftDoubleClick"
-                                        Command="{Binding LoadFolderChildsCommand}"
-                                        CommandParameter="{Binding}" />
-                                </StackPanel.InputBindings>
-
+                                <!-- Внешний вид файла -->
                                 <Border BorderBrush="#CCC" BorderThickness="1" Margin="3"
                                     Width="120" Padding="4" CornerRadius="10">
                                     <Image Width="100" Height="100">
@@ -172,16 +142,94 @@
                                     </Image>
                                 </Border>
                                 <TextBlock FontWeight="Bold" TextAlignment="Center" Text="{Binding Name}" />
+                                <!-- Контекстное меню файла -->
+                                <StackPanel.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Open" Command="{Binding FileOpenCommand}" 
+                                                  CommandParameter="{Binding RelativeSource={RelativeSource 
+                                            Mode=FindAncestor, 
+                                            AncestorType=ContextMenu}, 
+                                            Path=PlacementTarget.DataContext}"/>
+                                        <MenuItem Header="Save" 
+                                                  Command="{Binding SaveFilesCommand}"/>
+                                        <MenuItem Header="Edit" 
+                                                  Command="{Binding UpdateFileCommand}"/>
+                                        <Separator/>
+                                        <MenuItem Header="Delete" 
+                                                  Command="{Binding DeleteFilesCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}, Path=PlacementTarget.DataContext}"/>
+                                    </ContextMenu>
+                                </StackPanel.ContextMenu>
+                            </StackPanel>
+                        </DataTemplate>
+                        <!-- Шаблон для папок -->
+                        <DataTemplate DataType="{x:Type vm:FolderViewModel}">
+                            <StackPanel>
+                                <!-- Обработка нажатий мыши\клавиатуры -->
+                                <StackPanel.InputBindings>
+                                    <MouseBinding MouseAction="LeftDoubleClick"
+                                        Command="{Binding DataContext.LoadFolderChildsCommand,
+                                            RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                        CommandParameter="{Binding}" />
+                                </StackPanel.InputBindings>
 
+                                <!-- Внешний вид папки -->
+                                <Border BorderBrush="#CCC" BorderThickness="1" Margin="3"
+                                    Width="120" Padding="4" CornerRadius="10">
+                                    <Image Width="100" Height="100">
+                                        <Image.Style>
+                                            <Style TargetType="Image">
+                                                <Setter Property="Source" Value="{Binding PreviewPath}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding PreviewPath}" Value="{x:Null}">
+                                                        <Setter Property="Source" Value="{Binding PreviewImage}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Image.Style>
+                                    </Image>
+                                </Border>
+
+                                <Grid>
+                                    <!-- Показываем TextBlock, если НЕ редактируем -->
+                                    <TextBlock Text="{Binding Name}"
+                                        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
+                                        HorizontalAlignment="Center"
+                                        Margin="4"
+                                        Cursor="Hand">
+                                        <!-- Двойной клик запускает команду Rename -->
+                                        <TextBlock.InputBindings>
+                                            <MouseBinding Gesture="LeftDoubleClick"
+                                                Command="{Binding RenameCommand}" />
+                                        </TextBlock.InputBindings>
+                                    </TextBlock>
+
+                                    <!-- Показываем TextBox, если редактируем -->
+                                    <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                                        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}"
+                                        Margin="4"
+                                        HorizontalContentAlignment="Center"
+                                        HorizontalAlignment="Stretch"
+                                        behav:EditableTextBehavior.EnableCommitCancel="True">
+                                        <i:Interaction.Triggers>
+                                            <i:EventTrigger EventName="LostFocus">
+                                                <i:InvokeCommandAction Command="{Binding CommitEditCommand}" />
+                                            </i:EventTrigger>
+                                        </i:Interaction.Triggers>
+                                    </TextBox>
+                                </Grid>
+                                <!-- Контекстное меню папки -->
                                 <StackPanel.ContextMenu>
                                     <ContextMenu>
                                         <MenuItem Header="Open"
                                             Command="{Binding PlacementTarget.Tag.FileOpenCommand,
-                                            RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                             CommandParameter="{Binding}"/>
+                                        <MenuItem Header="Rename"
+                                            Command="{Binding RenameCommand}"/>
+                                        <Separator/>
                                         <MenuItem Header="Delete file"
                                             Command="{Binding PlacementTarget.Tag.DeleteFileCommand,
-                                            RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                             CommandParameter="{Binding}"/>
                                     </ContextMenu>
                                 </StackPanel.ContextMenu>
