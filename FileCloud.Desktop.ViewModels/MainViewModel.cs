@@ -10,6 +10,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace FileCloud.Desktop.ViewModels
@@ -75,7 +76,7 @@ namespace FileCloud.Desktop.ViewModels
             // Привязка команд к методам (RelayCommand или AsyncCommand)
             LoadFolderChildsCommand = new RelayCommand(async param => await GetFolderChilds(param as FolderViewModel));
             UploadFileCommand = new RelayCommand(async _ => await UploadFile());
-            CreateFolderCommand = new RelayCommand(async _ => await CreateFolder());
+            CreateFolderCommand = new RelayCommand(_ => CreateFolder());
             DeleteFileCommand = new RelayCommand(async _ => await DeleteFile());
             DeleteFolderCommand = new RelayCommand(async _ => await DeleteFolder());
             RenameFileCommand = new RelayCommand(async _ => await RenameFile());
@@ -157,9 +158,19 @@ namespace FileCloud.Desktop.ViewModels
                 StatusMessage = ex.Message;
             }
         }
-        private Task CreateFolder()
+        private async Task CreateFolder()
         {
-            throw new NotImplementedException();
+            var baseName = "new folder";
+            var name = baseName;
+            int i = 1;
+            while(Items.Where(i => i.Name == name).Count() > 0)
+            {
+                name = baseName + i;
+                i++;
+            }
+            var folder = new FolderViewModel(name, FolderPath.Last(), _folderService);
+            await _previewHelper.SetPreview(folder);
+            Items.Add(folder);
         }
         private Task DeleteFile() => throw new NotImplementedException();
         private Task DeleteFolder() => throw new NotImplementedException();

@@ -52,19 +52,19 @@ namespace FileCloud.Desktop.Services
         /// <summary>
         /// Создать папку
         /// </summary>
-        public async Task<FolderModel> CreateFolderAsync(string name, Guid parentId)
+        public async Task<Guid> CreateFolderAsync(string name, Guid parentId)
         {
-            return await ServerStateService.ExecuteIfServerActive<FolderModel>(_logger, async () =>
+            return await ServerStateService.ExecuteIfServerActive<Guid>(_logger, async () =>
             {
-                var response = await _client.PostAsJsonAsync($"/create", new { Name = name, ParentId = parentId });
+                var response = await _client.PostAsJsonAsync($"{_apiSubUrl}/create", new FolderRequest(name, parentId));
                 if (!response.IsSuccessStatusCode)
                 {
                     var error = await response.Content.ReadAsStringAsync();
                     _logger.LogError(error);
                     throw new HttpRequestException($"Ошибка при создании папки: {error}");
                 }
-
-                return (await response.Content.ReadFromJsonAsync<FolderModel>())!;
+                var id = await response.Content.ReadFromJsonAsync<Guid>();
+                return id;
             });
         }
 
@@ -75,7 +75,7 @@ namespace FileCloud.Desktop.Services
         {
             await ServerStateService.ExecuteIfServerActive<Task>(_logger, async () =>
             {
-                var response = await _client.DeleteAsync($"/delete/{folderId}");
+                var response = await _client.DeleteAsync($"{_apiSubUrl}/delete/{folderId}");
                 if (!response.IsSuccessStatusCode)
                 {
                     var error = await response.Content.ReadAsStringAsync();

@@ -221,16 +221,14 @@
                                 <StackPanel.ContextMenu>
                                     <ContextMenu>
                                         <MenuItem Header="Open"
-                                            Command="{Binding PlacementTarget.Tag.FileOpenCommand,
+                                            Command="{Binding PlacementTarget.Tag.LoadFolderChildsCommand,
                                                 RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                             CommandParameter="{Binding}"/>
                                         <MenuItem Header="Rename"
                                             Command="{Binding RenameCommand}"/>
                                         <Separator/>
-                                        <MenuItem Header="Delete file"
-                                            Command="{Binding PlacementTarget.Tag.DeleteFileCommand,
-                                                RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                            CommandParameter="{Binding}"/>
+                                        <MenuItem Header="Delete"
+                                            Command="{Binding DeleteCommand}"/>
                                     </ContextMenu>
                                 </StackPanel.ContextMenu>
                             </StackPanel>

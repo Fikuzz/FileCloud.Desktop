@@ -55,21 +55,33 @@ namespace FileCloud.Desktop.ViewModels
         {
             if (Id != Guid.Empty)
             {
-                await _folderService.DeleteFolderAsync(Id);
+                try
+                {
+                    await _folderService.DeleteFolderAsync(Id);
+                }
+                catch
+                {
+                    //придумать обработку ошибок
+                }
                 DeleteLocalFolder?.Invoke(this, EventArgs.Empty);
+
             }
         }
 
         private async Task OnCommitEdit()
         {
+            if(IsEditing == false)
+            {
+                return;
+            }
             IsEditing = false;
 
             if (IsNew)
             {
                 try
                 {
-                    var newFolder = await _folderService.CreateFolderAsync(Name, FolderId);
-                    Id = newFolder.Id;
+                    var folderId = await _folderService.CreateFolderAsync(Name, FolderId);
+                    Id = folderId;
                     IsNew = false;
                 }
                 catch
