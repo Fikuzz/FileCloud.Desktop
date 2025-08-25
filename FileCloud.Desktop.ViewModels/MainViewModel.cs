@@ -116,7 +116,7 @@ namespace FileCloud.Desktop.ViewModels
                     .Cast<ItemViewModel>()
                     .ToList();
                 items.AddRange(childs.Files
-                    .Select(f => new FileViewModel(f))
+                    .Select(f => new FileViewModel(f, _fileService))
                     .Cast<ItemViewModel>()
                     .ToList());
 
