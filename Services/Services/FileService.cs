@@ -97,7 +97,7 @@ namespace FileCloud.Desktop.Services
         {
             return await ServerStateService.ExecuteIfServerActive<DeleteFileResponse>(_logger, async () =>
             {
-                var response = await _client.DeleteAsync($"/delete/{fileId}");
+                var response = await _client.DeleteAsync($"{_apiSubUrl}/delete/{fileId}");
                 if (!response.IsSuccessStatusCode)
                 {
                     var serverError = await response.Content.ReadAsStringAsync();
@@ -123,7 +123,7 @@ namespace FileCloud.Desktop.Services
         {
             return await ServerStateService.ExecuteIfServerActive<byte[]>(_logger, async () =>
             {
-                var response = await _client.GetAsync($"/api/file/preview/{id}");
+                var response = await _client.GetAsync($"{_apiSubUrl}/preview/{id}");
                 if (!response.IsSuccessStatusCode)
                 {
                     var serverError = await response.Content.ReadAsStringAsync();
@@ -143,7 +143,7 @@ namespace FileCloud.Desktop.Services
         {
             return await ServerStateService.ExecuteIfServerActive<string>(_logger, async () =>
             {
-                var response = await _client.GetAsync($"/download/{id}");
+                var response = await _client.GetAsync($"{_apiSubUrl}/download/{id}");
                 if (!response.IsSuccessStatusCode)
                 {
                     var serverError = await response.Content.ReadAsStringAsync();
@@ -176,7 +176,7 @@ namespace FileCloud.Desktop.Services
             return await ServerStateService.ExecuteIfServerActive<string>(_logger, async () =>
             {
                 var request = new { newName = newName };
-                var response = await _client.PutAsJsonAsync($"/rename/{id}", request);
+                var response = await _client.PutAsJsonAsync($"{_apiSubUrl}/rename/{id}", request);
                 if (!response.IsSuccessStatusCode)
                 {
                     var serverError = await response.Content.ReadAsStringAsync();
@@ -196,7 +196,7 @@ namespace FileCloud.Desktop.Services
             return await ServerStateService.ExecuteIfServerActive<string>(_logger, async () =>
             {
                 var request = new { newFolder = newFolder };
-                var response = await _client.PutAsJsonAsync($"/move/{id}", request);
+                var response = await _client.PutAsJsonAsync($"{_apiSubUrl}/move/{id}", request);
                 if (!response.IsSuccessStatusCode)
                 {
                     var serverError = await response.Content.ReadAsStringAsync();
