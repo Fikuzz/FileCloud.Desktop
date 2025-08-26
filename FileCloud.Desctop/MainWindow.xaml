@@ -133,7 +133,7 @@
                                             Command="{Binding UpdateFileCommand}"/>
                                         <Separator/>
                                         <MenuItem Header="Delete" 
-                                            Command="{Binding DeleteFilesCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}, Path=PlacementTarget.DataContext}"/>
+                                            Command="{Binding DeleteCommand}"/>
                                     </ContextMenu>
                                 </StackPanel.ContextMenu>
                                 <!-- Внешний вид файла -->
