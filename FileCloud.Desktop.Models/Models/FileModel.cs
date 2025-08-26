@@ -3,5 +3,6 @@
     public record FileModel(
         Guid Id,
         string Name,
-        long? Size);
+        long? Size,
+        Guid FolderId);
 }
