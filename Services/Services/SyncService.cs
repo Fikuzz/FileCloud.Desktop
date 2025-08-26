@@ -30,10 +30,9 @@ public class SyncService
                 await _bus.Publish(new FileUploadedMessage(file));
         });
 
-        _connection.On<string>("FileDeleted", (fileId) =>
+        _connection.On<Guid>("FileDeleted", async (fileId) =>
         {
-            //var guid = Guid.Parse(fileId);
-            //FileDeleted?.Invoke(guid);
+            await _bus.Publish(new ItemDeletedMessage(fileId));
         });
 
         _connection.Closed += (error) =>

@@ -100,7 +100,8 @@ namespace FileCloud.Desktop.ViewModels
             });
 
             // Подписки на события SyncService
-            _bus.Subscribe<FileUploadedMessage>(msg => AddFile(msg));
+            _bus.Subscribe<FileUploadedMessage>(async msg => await AddFile(msg));
+            _bus.Subscribe<ItemDeletedMessage>(msg => DeleteItem(msg));
 
             _syncService.StartMonitoringAsync();
         }
@@ -221,7 +222,14 @@ namespace FileCloud.Desktop.ViewModels
                 _dispatcher.BeginInvoke(() => Items.Add(fileVM));
             }
         }
-        private void OnFileDeleted(Guid id) => throw new NotImplementedException();
+        private void DeleteItem(ItemDeletedMessage msg)
+        {
+            var deletedFile = Items.Where(i => i.Id == msg.Id).First();
+            if (deletedFile != null)
+            {
+                _dispatcher.BeginInvoke(() => Items.Remove(deletedFile));
+            }
+        }
         private void OnServerStateChanged(string description)
         {
             StatusMessage = description;
