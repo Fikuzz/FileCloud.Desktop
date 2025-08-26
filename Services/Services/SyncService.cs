@@ -1,18 +1,21 @@
-﻿using FileCloud.Desktop.Models.Models;
+﻿using FileCloud.Desktop.Helpers;
+using FileCloud.Desktop.Models;
+using FileCloud.Desktop.Models.Models;
 using FileCloud.Desktop.Services.Configurations;
+using FileCloud.Desktop.Services.ServerMessages;
 using Microsoft.AspNetCore.SignalR.Client;
+using System.Text.Json;
 
 namespace FileCloud.Desktop.Services.Services;
 public class SyncService
 {
     private readonly HubConnection _connection;
-
-    public event Action<FileModel> FileReceived;
-    public event Action<Guid> FileDeleted;
+    private readonly MessageBus _bus;
     public event Action<string> ServerState;
 
-    public SyncService(IAppSettingsService settings)
+    public SyncService(IAppSettingsService settings, MessageBus bus)
     {
+        _bus = bus;
         _connection = new HubConnectionBuilder()
             .WithUrl($"{settings.ApiBaseUrl}/fileHub")
             .WithAutomaticReconnect()
@@ -21,12 +24,10 @@ public class SyncService
 
     private void Start()
     {
-        _connection.On<string>("FileLoaded", async (fileId) =>
+        _connection.On<FileModel>("FileLoaded", async (file) =>
         {
-            //var guid = Guid.Parse(fileId);
-            //var apiResult = await _fileService.GetFileByIdAsync(guid);
-            //if (fileModel != null)
-            //    FileReceived?.Invoke(fileModel);
+            if(file != null)
+                await _bus.Publish(new FileUploadedMessage(file));
         });
 
         _connection.On<string>("FileDeleted", (fileId) =>
