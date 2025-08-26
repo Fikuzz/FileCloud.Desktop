@@ -1,9 +1,12 @@
 ﻿using FileCloud.Desktop.Commands;
+using FileCloud.Desktop.Helpers;
 using FileCloud.Desktop.Models.Models;
 using FileCloud.Desktop.Services;
 using FileCloud.Desktop.Services.Configurations;
+using FileCloud.Desktop.Services.ServerMessages;
 using FileCloud.Desktop.Services.Services;
 using FileCloud.Desktop.ViewModels.Helpers;
+using FileCloud.Desktop.ViewModels.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic;
 using System;
@@ -12,6 +15,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace FileCloud.Desktop.ViewModels
 {
@@ -20,10 +24,12 @@ namespace FileCloud.Desktop.ViewModels
         // ----------------------
         // Сервисы через DI
         // ----------------------
+        private readonly IUiDispatcher _dispatcher;
         private readonly FileService _fileService;
         private readonly FolderService _folderService;
         private readonly SyncService _syncService;
         private readonly PreviewHelper _previewHelper;
+        private readonly MessageBus _bus;
         private readonly IAppSettingsService _settings;
         private readonly IFileDialogService _dialogService;
         private readonly ILogger<MainViewModel> _logger;
@@ -61,11 +67,13 @@ namespace FileCloud.Desktop.ViewModels
         // ----------------------
         // Конструктор
         // ----------------------
-        public MainViewModel(FileService fileService, FolderService folderService, SyncService syncService, PreviewHelper previewHelper, IAppSettingsService settings, IFileDialogService dialogService, ILogger<MainViewModel> logger)
+        public MainViewModel(FileService fileService, FolderService folderService, SyncService syncService, PreviewHelper previewHelper, MessageBus bus, IAppSettingsService settings, IFileDialogService dialogService, ILogger<MainViewModel> logger, IUiDispatcher dispatcher)
         {
+            _dispatcher = dispatcher;
             _fileService = fileService;
             _folderService = folderService;
             _syncService = syncService;
+            _bus = bus;
             _settings = settings;
             _dialogService = dialogService;
             _previewHelper = previewHelper;
@@ -91,10 +99,9 @@ namespace FileCloud.Desktop.ViewModels
                     await OpenFile(file);
             });
 
-            // Подписка на события FileSyncService
-            _syncService.FileReceived += OnFileReceived;
-            _syncService.FileDeleted += OnFileDeleted;
-            _syncService.ServerState += OnServerStateChanged;
+            // Подписки на события SyncService
+            _bus.Subscribe<FileUploadedMessage>(msg => AddFile(msg));
+
             _syncService.StartMonitoringAsync();
         }
 
@@ -205,7 +212,15 @@ namespace FileCloud.Desktop.ViewModels
         // ----------------------
         // Методы для FileSyncService
         // ----------------------
-        private void OnFileReceived(FileModel file) => throw new NotImplementedException();
+        private async Task AddFile(FileUploadedMessage msg)
+        {
+            if (msg.Model.FolderId == FolderPath.Last())
+            {
+                var fileVM = new FileViewModel(msg.Model, _fileService);
+                await _previewHelper.SetPreview(fileVM);
+                _dispatcher.BeginInvoke(() => Items.Add(fileVM));
+            }
+        }
         private void OnFileDeleted(Guid id) => throw new NotImplementedException();
         private void OnServerStateChanged(string description)
         {
