@@ -1,5 +1,6 @@
 ﻿using FileCloud.Desktop.Commands;
 using FileCloud.Desktop.Helpers;
+using FileCloud.Desktop.Models;
 using FileCloud.Desktop.Models.Models;
 using FileCloud.Desktop.Services;
 using FileCloud.Desktop.Services.Configurations;
@@ -39,7 +40,7 @@ namespace FileCloud.Desktop.ViewModels
         // ----------------------
         public ObservableCollection<ItemViewModel> Items { get; } = new();
         public ObservableCollection<ItemViewModel> SelectedItem{ get; } = new();
-        public List<Guid> FolderPath { get; } = new(); // навигация по папкам
+        public ObservableCollection<FolderViewModel> FolderPath { get; } = new(); // навигация по папкам
 
         private string _statusMessage = string.Empty;
         public string StatusMessage
@@ -64,6 +65,9 @@ namespace FileCloud.Desktop.ViewModels
         public ICommand DownloadPreviewCommand { get; }
         public ICommand OpenFileCommand { get; }
 
+
+        private readonly FolderModel _rootFolder;
+
         // ----------------------
         // Конструктор
         // ----------------------
@@ -79,7 +83,9 @@ namespace FileCloud.Desktop.ViewModels
             _previewHelper = previewHelper;
             _logger = logger;
 
-            FolderPath.Add(_settings.RootFolderId);
+            _rootFolder = new Models.FolderModel(_settings.RootFolderId, "Root", Guid.Empty);
+            var baseFolderVM = new FolderViewModel(_rootFolder, _folderService);
+            FolderPath.Add(baseFolderVM);
 
             // Привязка команд к методам (RelayCommand или AsyncCommand)
             LoadFolderChildsCommand = new RelayCommand(async param => await GetFolderChilds(param as FolderViewModel));
@@ -113,12 +119,19 @@ namespace FileCloud.Desktop.ViewModels
         {
             Items.Clear();
 
-            Guid folderId = folder != null ? folder.Id : _settings.RootFolderId;
-            FolderPathSet(folderId);
+            if (folder == null)
+            {
+                var baseFolderVM = new FolderViewModel(_rootFolder, _folderService);
+                FolderPathSet(baseFolderVM);
+            }
+            else
+            {
+                FolderPathSet(folder);
+            }
 
             try
-            {
-                var childs = await _folderService.GetFolderContentAsync(FolderPath.Last());
+            {;
+                var childs = await _folderService.GetFolderContentAsync(FolderPathGetLastId);
                 List<ItemViewModel> items = childs.Folders
                     .Select(f => new FolderViewModel(f, _folderService))
                     .Cast<ItemViewModel>()
@@ -158,7 +171,7 @@ namespace FileCloud.Desktop.ViewModels
             {
                 foreach (var file in files)
                 {
-                    await _fileService.UploadFileAsync(FolderPath.Last(), file);
+                    await _fileService.UploadFileAsync(FolderPathGetLastId, file);
                 }
             }
             catch(Exception ex)
@@ -176,7 +189,7 @@ namespace FileCloud.Desktop.ViewModels
                 name = baseName + i;
                 i++;
             }
-            var folder = new FolderViewModel(name, FolderPath.Last(), _folderService);
+            var folder = new FolderViewModel(name, FolderPathGetLastId, _folderService);
             await _previewHelper.SetPreview(folder);
             Items.Add(folder);
         }
@@ -194,28 +207,31 @@ namespace FileCloud.Desktop.ViewModels
         // ----------------------
         private Task GetPreview(FileViewModel file) => throw new NotImplementedException();
         private Task OpenFile(FileViewModel file) => throw new NotImplementedException();
-        private void FolderPathSet(Guid id)
+        private void FolderPathSet(FolderViewModel vm)
         {
-            var folderIndex = FolderPath.IndexOf(id);
-            if (folderIndex == -1)
+            var folder = FolderPath.SingleOrDefault(f => f.Id == vm.Id);
+            if (folder == null)
             {
-                FolderPath.Add(id);
+                FolderPath.Add(vm);
             }
             else
             {
-                while (FolderPath.Count > folderIndex + 1)
+                int index = FolderPath.IndexOf(folder);
+                while (FolderPath.Count > index + 1)
                 {
                     FolderPath.RemoveAt(FolderPath.Count - 1);
                 }
             }
         }
+        private Guid FolderPathGetLastId =>
+            FolderPath.Last().Id;
 
         // ----------------------
         // Методы для FileSyncService
         // ----------------------
         private async Task AddFile(FileUploadedMessage msg)
         {
-            if (msg.Model.FolderId == FolderPath.Last())
+            if (msg.Model.FolderId == FolderPathGetLastId)
             {
                 var fileVM = new FileViewModel(msg.Model, _fileService);
                 await _previewHelper.SetPreview(fileVM);

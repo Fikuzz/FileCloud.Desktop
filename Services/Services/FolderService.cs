@@ -26,6 +26,29 @@ namespace FileCloud.Desktop.Services
         }
 
         /// <summary>
+        /// Получить папку по ID
+        /// </summary>
+        public async Task<FolderModel> GetFolderAsync(Guid id)
+        {
+            return await ServerStateService.ExecuteIfServerActive<FolderModel>(_logger, async () =>
+            {
+                var response = await _client.GetAsync(Path.Combine(_apiSubUrl, id.ToString()));
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    _logger.LogError(error);
+                    throw new HttpRequestException($"Ошибка при получении папки: {error}");
+                }
+                var apiResult = await response.Content.ReadFromJsonAsync<ApiResult<FolderModel>>();
+                if(apiResult.Error != null)
+                {
+                    _logger.LogError($"Error: {apiResult.Error}");
+                    throw new HttpRequestException(apiResult.Error);
+                }
+                return apiResult.Response;
+            });
+        }
+        /// <summary>
         /// Получить список папок внутри родительской папки
         /// </summary>
         public async Task<ContentResponse> GetFolderContentAsync(Guid id)

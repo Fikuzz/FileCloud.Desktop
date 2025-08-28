@@ -87,11 +87,45 @@
 						Command="{Binding DeleteFilesCommand}" />
                 </StackPanel>
             </DockPanel>
-            <ScrollViewer
+            <DockPanel>
+                <DockPanel DockPanel.Dock="Top">
+                    <ItemsControl ItemsSource="{Binding FolderPath}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:FolderViewModel}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="{Binding Name}"
+                                            Command="{Binding DataContext.NavigateCommand, 
+                                                RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding}"
+                                            FontSize="13"
+                                            BorderThickness="0"
+                                            Margin="0"
+                                            Padding="4"
+                                            Background="White"/>
+                                    <TextBlock Text="/" 
+                                            Margin="0"
+                                            VerticalAlignment="Center"
+                                            FontSize="18"
+                                            Visibility="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter},
+                                                Path=IsLastItem, 
+                                                Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </DockPanel>
+                <DockPanel>
+                    <TextBlock/>
+                    <ScrollViewer
 				VerticalScrollBarVisibility="Auto"
 				HorizontalScrollBarVisibility="Disabled">
-                <!-- Item List -->
-                <ListBox
+                        <!-- Item List -->
+                        <ListBox
 					SelectionMode="Extended"
 					BorderThickness="0"
 					Background="#00FFFFFF"
@@ -100,174 +134,176 @@
 					ScrollViewer.VerticalScrollBarVisibility="Auto"
 					ItemsSource="{Binding Items}"
 					helpers:ListBoxSelectedItemsBinding.BindableSelectedItems="{Binding SelectedFiles}" d:ItemsSource="{d:SampleData ItemCount=5}" BorderBrush="#FF909090">
-                    <!-- Контекстное меню ListBox -->
-                    <ListBox.ContextMenu>
-                        <ContextMenu>
-                            <MenuItem Header="New folder"
+                            <!-- Контекстное меню ListBox -->
+                            <ListBox.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="New folder"
                                       Command="{Binding CreateFolderCommand}"/>
-                        </ContextMenu>
-                    </ListBox.ContextMenu>
-                    <ListBox.Resources>
-                        <behav:BindingProxy x:Key="Proxy" Data="{Binding}"/>
-                        <!-- Шаблон для файлов -->
-                        <DataTemplate DataType="{x:Type vm:FileViewModel}">
-                            <StackPanel>
-                                <!-- Обработка нажатий мыши\клавиатуры -->
-                                <StackPanel.InputBindings>
-                                    <MouseBinding MouseAction="LeftDoubleClick"
+                                </ContextMenu>
+                            </ListBox.ContextMenu>
+                            <ListBox.Resources>
+                                <behav:BindingProxy x:Key="Proxy" Data="{Binding}"/>
+                                <!-- Шаблон для файлов -->
+                                <DataTemplate DataType="{x:Type vm:FileViewModel}">
+                                    <StackPanel>
+                                        <!-- Обработка нажатий мыши\клавиатуры -->
+                                        <StackPanel.InputBindings>
+                                            <MouseBinding MouseAction="LeftDoubleClick"
                                         Command="{Binding PlacementTarget.Tag.FileOpenCommand,
                                         RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                         CommandParameter="{Binding}" />
-                                </StackPanel.InputBindings>
-                                <!-- Контекстное меню файла -->
-                                <StackPanel.ContextMenu>
-                                    <ContextMenu>
-                                        <MenuItem Header="Open" Command="{Binding OpenFileCommand}" 
+                                        </StackPanel.InputBindings>
+                                        <!-- Контекстное меню файла -->
+                                        <StackPanel.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="Open" Command="{Binding OpenFileCommand}" 
                                             CommandParameter="{Binding RelativeSource={RelativeSource 
                                                 Mode=FindAncestor, 
                                                 AncestorType=ContextMenu}, 
                                                 Path=PlacementTarget.DataContext}"/>
-                                        <MenuItem Header="Save" 
+                                                <MenuItem Header="Save" 
                                             Command="{Binding SaveFilesCommand}"/>
-                                        <MenuItem Header="Edit" 
+                                                <MenuItem Header="Edit" 
                                             Command="{Binding UpdateFileCommand}"/>
-                                        <Separator/>
-                                        <MenuItem Header="Delete" 
+                                                <Separator/>
+                                                <MenuItem Header="Delete" 
                                             Command="{Binding DeleteCommand}"/>
-                                    </ContextMenu>
-                                </StackPanel.ContextMenu>
-                                <!-- Внешний вид файла -->
-                                <Border BorderBrush="#CCC" BorderThickness="1" Margin="3"
+                                            </ContextMenu>
+                                        </StackPanel.ContextMenu>
+                                        <!-- Внешний вид файла -->
+                                        <Border BorderBrush="#CCC" BorderThickness="1" Margin="3"
                                     Width="120" Padding="4" CornerRadius="10">
-                                    <Image Width="100" Height="100">
-                                        <Image.Style>
-                                            <Style TargetType="Image">
-                                                <Setter Property="Source" Value="{Binding PreviewPath}" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding PreviewPath}" Value="{x:Null}">
-                                                        <Setter Property="Source" Value="{Binding PreviewImage}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Image.Style>
-                                    </Image>
-                                </Border>
-                                <Grid>
-                                    <!-- Показываем TextBlock, если НЕ редактируем -->
-                                    <TextBlock Text="{Binding Name}"
+                                            <Image Width="100" Height="100">
+                                                <Image.Style>
+                                                    <Style TargetType="Image">
+                                                        <Setter Property="Source" Value="{Binding PreviewPath}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding PreviewPath}" Value="{x:Null}">
+                                                                <Setter Property="Source" Value="{Binding PreviewImage}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Image.Style>
+                                            </Image>
+                                        </Border>
+                                        <Grid>
+                                            <!-- Показываем TextBlock, если НЕ редактируем -->
+                                            <TextBlock Text="{Binding Name}"
                                         Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
                                         HorizontalAlignment="Center"
                                         Margin="4"
                                         Cursor="Hand">
                                         <!-- Двойной клик запускает команду Rename -->
-                                        <TextBlock.InputBindings>
-                                            <MouseBinding Gesture="LeftDoubleClick"
+                                                <TextBlock.InputBindings>
+                                                    <MouseBinding Gesture="LeftDoubleClick"
                                                 Command="{Binding RenameCommand}" />
-                                        </TextBlock.InputBindings>
-                                    </TextBlock>
+                                                </TextBlock.InputBindings>
+                                            </TextBlock>
 
-                                    <!-- Показываем TextBox, если редактируем -->
-                                    <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                                            <!-- Показываем TextBox, если редактируем -->
+                                            <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
                                         Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}"
                                         Margin="4"
                                         HorizontalContentAlignment="Center"
                                         HorizontalAlignment="Stretch"
                                         behav:EditableTextBehavior.EnableCommitCancel="True"
                                         behav:FocusBehavior.IsFocused="{Binding IsEditing}">
-                                        <i:Interaction.Triggers>
-                                            <i:EventTrigger EventName="LostFocus">
-                                                <i:InvokeCommandAction Command="{Binding CommitEditCommand}" />
-                                            </i:EventTrigger>
-                                        </i:Interaction.Triggers>
-                                    </TextBox>
-                                </Grid>
-                            </StackPanel>
-                        </DataTemplate>
-                        <!-- Шаблон для папок -->
-                        <DataTemplate DataType="{x:Type vm:FolderViewModel}">
-                            <StackPanel>
-                                <!-- Обработка нажатий мыши\клавиатуры -->
-                                <StackPanel.InputBindings>
-                                    <MouseBinding MouseAction="LeftDoubleClick"
+                                                <i:Interaction.Triggers>
+                                                    <i:EventTrigger EventName="LostFocus">
+                                                        <i:InvokeCommandAction Command="{Binding CommitEditCommand}" />
+                                                    </i:EventTrigger>
+                                                </i:Interaction.Triggers>
+                                            </TextBox>
+                                        </Grid>
+                                    </StackPanel>
+                                </DataTemplate>
+                                <!-- Шаблон для папок -->
+                                <DataTemplate DataType="{x:Type vm:FolderViewModel}">
+                                    <StackPanel>
+                                        <!-- Обработка нажатий мыши\клавиатуры -->
+                                        <StackPanel.InputBindings>
+                                            <MouseBinding MouseAction="LeftDoubleClick"
                                         Command="{Binding DataContext.LoadFolderChildsCommand,
                                             RelativeSource={RelativeSource AncestorType=ListBox}}"
                                         CommandParameter="{Binding}" />
-                                </StackPanel.InputBindings>
-                                <!-- Контекстное меню папки -->
-                                <StackPanel.ContextMenu>
-                                    <ContextMenu>
-                                        <MenuItem Header="Open"
+                                        </StackPanel.InputBindings>
+                                        <!-- Контекстное меню папки -->
+                                        <StackPanel.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="Open"
                                             Command="{Binding Source={StaticResource Proxy}, Path=Data.LoadFolderChildsCommand}"
                                             CommandParameter="{Binding}" />
-                                        <MenuItem Header="Rename"
+                                                <MenuItem Header="Rename"
                                             Command="{Binding RenameCommand}" />
-                                        <Separator/>
-                                        <MenuItem Header="Delete"
+                                                <Separator/>
+                                                <MenuItem Header="Delete"
                                             Command="{Binding DeleteCommand}" />
-                                    </ContextMenu>
-                                </StackPanel.ContextMenu>
+                                            </ContextMenu>
+                                        </StackPanel.ContextMenu>
 
-                                <!-- Внешний вид папки -->
-                                <Border BorderBrush="#CCC" BorderThickness="1" Margin="3"
+                                        <!-- Внешний вид папки -->
+                                        <Border BorderBrush="#CCC" BorderThickness="1" Margin="3"
                                     Width="120" Padding="4" CornerRadius="10">
-                                    <Image Width="100" Height="100">
-                                        <Image.Style>
-                                            <Style TargetType="Image">
-                                                <Setter Property="Source" Value="{Binding PreviewPath}" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding PreviewPath}" Value="{x:Null}">
-                                                        <Setter Property="Source" Value="{Binding PreviewImage}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Image.Style>
-                                    </Image>
-                                </Border>
+                                            <Image Width="100" Height="100">
+                                                <Image.Style>
+                                                    <Style TargetType="Image">
+                                                        <Setter Property="Source" Value="{Binding PreviewPath}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding PreviewPath}" Value="{x:Null}">
+                                                                <Setter Property="Source" Value="{Binding PreviewImage}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Image.Style>
+                                            </Image>
+                                        </Border>
 
-                                <Grid>
-                                    <!-- Показываем TextBlock, если НЕ редактируем -->
-                                    <TextBlock Text="{Binding Name}"
+                                        <Grid>
+                                            <!-- Показываем TextBlock, если НЕ редактируем -->
+                                            <TextBlock Text="{Binding Name}"
                                         Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
                                         HorizontalAlignment="Center"
                                         Margin="4"
                                         Cursor="Hand">
                                         <!-- Двойной клик запускает команду Rename -->
-                                        <TextBlock.InputBindings>
-                                            <MouseBinding Gesture="LeftDoubleClick"
+                                                <TextBlock.InputBindings>
+                                                    <MouseBinding Gesture="LeftDoubleClick"
                                                 Command="{Binding RenameCommand}" />
-                                        </TextBlock.InputBindings>
-                                    </TextBlock>
+                                                </TextBlock.InputBindings>
+                                            </TextBlock>
 
-                                    <!-- Показываем TextBox, если редактируем -->
-                                    <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                                            <!-- Показываем TextBox, если редактируем -->
+                                            <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
                                         Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}"
                                         Margin="4"
                                         HorizontalContentAlignment="Center"
                                         HorizontalAlignment="Stretch"
                                         behav:EditableTextBehavior.EnableCommitCancel="True"
                                         behav:FocusBehavior.IsFocused="{Binding IsEditing}">
-                                        <i:Interaction.Triggers>
-                                            <i:EventTrigger EventName="LostFocus">
-                                                <i:InvokeCommandAction Command="{Binding CommitEditCommand}" />
-                                            </i:EventTrigger>
-                                        </i:Interaction.Triggers>
-                                    </TextBox>
-                                </Grid>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.Resources>
-                    <ListBox.InputBindings>
-                        <KeyBinding Key="Delete"
+                                                <i:Interaction.Triggers>
+                                                    <i:EventTrigger EventName="LostFocus">
+                                                        <i:InvokeCommandAction Command="{Binding CommitEditCommand}" />
+                                                    </i:EventTrigger>
+                                                </i:Interaction.Triggers>
+                                            </TextBox>
+                                        </Grid>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.Resources>
+                            <ListBox.InputBindings>
+                                <KeyBinding Key="Delete"
                             Command="{Binding DeleteFilesCommand}"
                             CommandParameter="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=ListBox}}" />
-                    </ListBox.InputBindings>
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                </ListBox>
-            </ScrollViewer>
+                            </ListBox.InputBindings>
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ListBox>
+                    </ScrollViewer>
+                </DockPanel>
+            </DockPanel>
         </DockPanel>
     </DockPanel>
 </Window>
