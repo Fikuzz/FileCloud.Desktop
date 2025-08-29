@@ -3,6 +3,7 @@ using FileCloud.Desktop.Models;
 using FileCloud.Desktop.Services;
 using FileCloud.Desktop.ViewModels;
 using FileCloud.Desktop.ViewModels.Interfaces;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
@@ -23,7 +24,7 @@ namespace FileCloud.Desktop.ViewModels
         public bool IsNew { get; private set; }
 
         public event EventHandler? DeleteLocalFolder;
-        public FolderViewModel(FolderModel dto, FolderService folderService)
+        public FolderViewModel(FolderModel dto, FolderService folderService, bool isNew)
         {
             _folderService = folderService;
 
@@ -35,13 +36,12 @@ namespace FileCloud.Desktop.ViewModels
             Id = dto.Id;
             Name = dto.Name;
             FolderId = dto.ParentId;
-        }
 
-        public FolderViewModel(string name, Guid parentId, FolderService folderService, bool isNew = true)
-            : this(new FolderModel(Guid.Empty, name, parentId), folderService)
-        {
-            IsNew = isNew;
-            BeginEdit();
+            if(isNew)
+            {
+                IsNew = true;
+                BeginEdit();
+            }
         }
 
         private void BeginEdit()

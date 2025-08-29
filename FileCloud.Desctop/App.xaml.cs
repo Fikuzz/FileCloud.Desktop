@@ -1,10 +1,12 @@
 ﻿using FileCloud.Desktop;
 using FileCloud.Desktop.Helpers;
+using FileCloud.Desktop.Models.Models;
 using FileCloud.Desktop.Services;
 using FileCloud.Desktop.Services.Configurations;
 using FileCloud.Desktop.Services.Services;
 using FileCloud.Desktop.View.Helpers;
 using FileCloud.Desktop.ViewModels;
+using FileCloud.Desktop.ViewModels.Factories;
 using FileCloud.Desktop.ViewModels.Helpers;
 using FileCloud.Desktop.ViewModels.Interfaces;
 using Microsoft.Extensions.Configuration;
@@ -51,6 +53,7 @@ public partial class App : Application
         // Сервисы
         services.AddSingleton<IAppSettingsService, AppSettingsService>();
         services.AddSingleton<IFileDialogService, FileDialogService>();
+        services.AddSingleton<IFileSaveService, FileSaveService>();
         services.AddSingleton<SyncService>();
         services.AddSingleton<FileService>();
         services.AddSingleton<FolderService>();
@@ -61,6 +64,10 @@ public partial class App : Application
 
         // ViewModels
         services.AddSingleton<MainViewModel>();
+        services.AddTransient<FileViewModel>();
+        services.AddSingleton<IFileViewModelFactory,  FileViewModelFactory>();
+        services.AddTransient<FolderViewModel>();
+        services.AddSingleton<IFolderViewModelFactory, FolderViewModelFactory>();
 
         // Windows/Views
         services.AddSingleton<MainWindow>();

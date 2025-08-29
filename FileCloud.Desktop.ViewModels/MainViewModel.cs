@@ -6,6 +6,7 @@ using FileCloud.Desktop.Services;
 using FileCloud.Desktop.Services.Configurations;
 using FileCloud.Desktop.Services.ServerMessages;
 using FileCloud.Desktop.Services.Services;
+using FileCloud.Desktop.ViewModels.Factories;
 using FileCloud.Desktop.ViewModels.Helpers;
 using FileCloud.Desktop.ViewModels.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -25,6 +26,9 @@ namespace FileCloud.Desktop.ViewModels
         // ----------------------
         // Сервисы через DI
         // ----------------------
+        private readonly IFileViewModelFactory _fileVmFactory;
+        private readonly IFolderViewModelFactory _folderVmFactory;
+
         private readonly IUiDispatcher _dispatcher;
         private readonly FileService _fileService;
         private readonly FolderService _folderService;
@@ -55,24 +59,17 @@ namespace FileCloud.Desktop.ViewModels
         public ICommand LoadFolderChildsCommand { get; }
         public ICommand UploadFileCommand { get; }
         public ICommand CreateFolderCommand { get; }
-        public ICommand DeleteFileCommand { get; }
-        public ICommand DeleteFolderCommand { get; }
-        public ICommand RenameFileCommand { get; }
-        public ICommand RenameFolderCommand { get; }
-        public ICommand MoveFileCommand { get; }
-        public ICommand MoveFolderCommand { get; }
-        public ICommand DownloadFileCommand { get; }
-        public ICommand DownloadPreviewCommand { get; }
-        public ICommand OpenFileCommand { get; }
-
 
         private readonly FolderModel _rootFolder;
 
         // ----------------------
         // Конструктор
         // ----------------------
-        public MainViewModel(FileService fileService, FolderService folderService, SyncService syncService, PreviewHelper previewHelper, MessageBus bus, IAppSettingsService settings, IFileDialogService dialogService, ILogger<MainViewModel> logger, IUiDispatcher dispatcher)
+        public MainViewModel(FileService fileService, FolderService folderService, SyncService syncService, PreviewHelper previewHelper, MessageBus bus, IAppSettingsService settings, IFileDialogService dialogService, ILogger<MainViewModel> logger, IUiDispatcher dispatcher, IFileViewModelFactory fileViewModelFactory, IFolderViewModelFactory folderViewModelFactory)
         {
+            _fileVmFactory = fileViewModelFactory;
+            _folderVmFactory = folderViewModelFactory;
+
             _dispatcher = dispatcher;
             _fileService = fileService;
             _folderService = folderService;
@@ -84,30 +81,18 @@ namespace FileCloud.Desktop.ViewModels
             _logger = logger;
 
             _rootFolder = new Models.FolderModel(_settings.RootFolderId, "Root", Guid.Empty);
-            var baseFolderVM = new FolderViewModel(_rootFolder, _folderService);
+            var baseFolderVM = _folderVmFactory.Create(_rootFolder);
             FolderPath.Add(baseFolderVM);
 
             // Привязка команд к методам (RelayCommand или AsyncCommand)
             LoadFolderChildsCommand = new RelayCommand(async param => await GetFolderChilds(param as FolderViewModel));
             UploadFileCommand = new RelayCommand(async _ => await UploadFile());
             CreateFolderCommand = new RelayCommand(_ => CreateFolder());
-            DeleteFileCommand = new RelayCommand(async _ => await DeleteFile());
-            DeleteFolderCommand = new RelayCommand(async _ => await DeleteFolder());
-            RenameFileCommand = new RelayCommand(async _ => await RenameFile());
-            RenameFolderCommand = new RelayCommand(async _ => await RenameFolder());
-            MoveFileCommand = new RelayCommand(async _ => await MoveFile());
-            MoveFolderCommand = new RelayCommand(async _ => await MoveFolder());
-            DownloadFileCommand = new RelayCommand(async _ => await DownloadFile());
-            DownloadPreviewCommand = new RelayCommand(async _ => await DownloadPreview());
-            OpenFileCommand = new RelayCommand(async param =>
-            {
-                if (param is FileViewModel file)
-                    await OpenFile(file);
-            });
 
             // Подписки на события SyncService
             _bus.Subscribe<FileUploadedMessage>(async msg => await AddFile(msg));
             _bus.Subscribe<ItemDeletedMessage>(msg => DeleteItem(msg));
+            _bus.Subscribe<ServerIsActiveMessage>(msg => OnServerStateChanged(msg));
 
             _syncService.StartMonitoringAsync();
         }
@@ -121,8 +106,7 @@ namespace FileCloud.Desktop.ViewModels
 
             if (folder == null)
             {
-                var baseFolderVM = new FolderViewModel(_rootFolder, _folderService);
-                FolderPathSet(baseFolderVM);
+                FolderPathSet(FolderPathGetLast);
             }
             else
             {
@@ -133,11 +117,11 @@ namespace FileCloud.Desktop.ViewModels
             {;
                 var childs = await _folderService.GetFolderContentAsync(FolderPathGetLastId);
                 List<ItemViewModel> items = childs.Folders
-                    .Select(f => new FolderViewModel(f, _folderService))
+                    .Select(f => _folderVmFactory.Create(f))
                     .Cast<ItemViewModel>()
                     .ToList();
                 items.AddRange(childs.Files
-                    .Select(f => new FileViewModel(f, _fileService))
+                    .Select(f => _fileVmFactory.Create(f))
                     .Cast<ItemViewModel>()
                     .ToList());
 
@@ -189,18 +173,10 @@ namespace FileCloud.Desktop.ViewModels
                 name = baseName + i;
                 i++;
             }
-            var folder = new FolderViewModel(name, FolderPathGetLastId, _folderService);
+            var folder = _folderVmFactory.Create(new FolderModel(Guid.Empty, name, FolderPathGetLastId), true);
             await _previewHelper.SetPreview(folder);
             Items.Add(folder);
         }
-        private Task DeleteFile() => throw new NotImplementedException();
-        private Task DeleteFolder() => throw new NotImplementedException();
-        private Task RenameFile() => throw new NotImplementedException();
-        private Task RenameFolder() => throw new NotImplementedException();
-        private Task MoveFile() => throw new NotImplementedException();
-        private Task MoveFolder() => throw new NotImplementedException();
-        private Task DownloadFile() => throw new NotImplementedException();
-        private Task DownloadPreview() => throw new NotImplementedException();
 
         // ----------------------
         // Методы для локальной работы с файлами
@@ -225,6 +201,8 @@ namespace FileCloud.Desktop.ViewModels
         }
         private Guid FolderPathGetLastId =>
             FolderPath.Last().Id;
+        private FolderViewModel FolderPathGetLast =>
+            FolderPath.Last();
 
         // ----------------------
         // Методы для FileSyncService
@@ -233,7 +211,7 @@ namespace FileCloud.Desktop.ViewModels
         {
             if (msg.Model.FolderId == FolderPathGetLastId)
             {
-                var fileVM = new FileViewModel(msg.Model, _fileService);
+                var fileVM = _fileVmFactory.Create(msg.Model);
                 await _previewHelper.SetPreview(fileVM);
                 _dispatcher.BeginInvoke(() => Items.Add(fileVM));
             }
@@ -246,9 +224,13 @@ namespace FileCloud.Desktop.ViewModels
                 _dispatcher.BeginInvoke(() => Items.Remove(deletedFile));
             }
         }
-        private void OnServerStateChanged(string description)
+        private void OnServerStateChanged(ServerIsActiveMessage message)
         {
-            StatusMessage = description;
+            if (message.IsActive)
+            {
+                _dispatcher.BeginInvoke(async () => await GetFolderChilds(null));
+            }
+            _dispatcher.BeginInvoke(() => StatusMessage = message.Message);
         }
 
         // ----------------------
