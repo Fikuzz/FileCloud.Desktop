@@ -35,25 +35,27 @@ public class SyncService
             await _bus.Publish(new ItemDeletedMessage(fileId));
         });
 
-        _connection.Closed += (error) =>
+        _connection.On<Guid>("FolderDeleted", async (folderId) =>
         {
-            //_fileService.ServerState = false;
-            //ServerState?.Invoke(false, "Соединение закрыто. Переподключение...");
-            return Task.CompletedTask;
+            await _bus.Publish(new ItemDeletedMessage(folderId));
+        });
+
+        _connection.Closed += async (error) =>
+        {
+            ServerStateService.SetServerState(false);
+            await _bus.Publish(new ServerIsActiveMessage(false, error?.Message));
         };
 
-        _connection.Reconnecting += (error) =>
+        _connection.Reconnecting += async (error) =>
         {
-            //_fileService.ServerState = false;
-            //ServerState?.Invoke(false, "Пытаюсь переподключиться...");
-            return Task.CompletedTask;
+            ServerStateService.SetServerState(false);
+            await _bus.Publish(new ServerIsActiveMessage(false, error?.Message));
         };
 
-        _connection.Reconnected += (connectionId) =>
+        _connection.Reconnected += async (connectionId) =>
         {
-            //_fileService.ServerState = true;
-            //ServerState?.Invoke(true, "Переподключился!");
-            return Task.CompletedTask;
+            ServerStateService.SetServerState(true);
+            await _bus.Publish(new ServerIsActiveMessage(true, "Сервер доступен"));
         };
     }
 
@@ -66,14 +68,14 @@ public class SyncService
                 await _connection.StartAsync();
                 await _connection.InvokeAsync("Ping");
                 ServerStateService.SetServerState(true);
-                ServerState?.Invoke("Сервер доступен");
+                await _bus.Publish(new ServerIsActiveMessage(true, "Сервер доступен"));
                 Start();
                 return;
             }
             catch
             {
                 ServerStateService.SetServerState(false);
-                ServerState?.Invoke("Сервер не отвечает");
+                await _bus.Publish(new ServerIsActiveMessage(true, "Сервер доступен"));
             }
 
             await Task.Delay(intervalMs);
