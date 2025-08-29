@@ -90,6 +90,9 @@
             <DockPanel>
                 <DockPanel DockPanel.Dock="Top">
                     <ItemsControl ItemsSource="{Binding FolderPath}">
+                        <ItemsControl.Resources>
+                            <behav:BindingProxy x:Key="Proxy" Data="{Binding}"/>
+                        </ItemsControl.Resources>
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel Orientation="Horizontal"/>
@@ -99,8 +102,7 @@
                             <DataTemplate DataType="{x:Type vm:FolderViewModel}">
                                 <StackPanel Orientation="Horizontal">
                                     <Button Content="{Binding Name}"
-                                            Command="{Binding DataContext.NavigateCommand, 
-                                                RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            Command="{Binding Source={StaticResource Proxy}, Path=Data.LoadFolderChildsCommand}"
                                             CommandParameter="{Binding}"
                                             FontSize="13"
                                             BorderThickness="0"
