@@ -31,6 +31,7 @@ public partial class App : Application
         // Запуск главного окна через DI
         var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
         mainWindow.Show();
+        FileMappingManager.Cleanup();
     }
 
     private void ConfigureServices(IServiceCollection services)

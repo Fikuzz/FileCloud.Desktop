@@ -38,7 +38,19 @@ namespace FileCloud.Desktop.Helpers
 
         public static string? GetLocalPath(Guid id)
         {
-            return _mappings.FirstOrDefault(m => m.Id == id)?.LocalPath;
+            var mapping = _mappings.FirstOrDefault(m => m.Id == id);
+            if (mapping == null)
+                return null;
+
+            if (!File.Exists(mapping.LocalPath))
+            {
+                // Удаляем мёртвую связь
+                _mappings.Remove(mapping);
+                Save();
+                return null;
+            }
+
+            return mapping.LocalPath;
         }
 
         public static void Remove(Guid id)
@@ -63,6 +75,12 @@ namespace FileCloud.Desktop.Helpers
         {
             var json = JsonSerializer.Serialize(_mappings, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(MappingFile, json);
+        }
+
+        public static void Cleanup()
+        {
+            _mappings.RemoveAll(m => !File.Exists(m.LocalPath));
+            Save();
         }
 
         private class FileMapping
