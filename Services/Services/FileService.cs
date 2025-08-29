@@ -139,9 +139,9 @@ namespace FileCloud.Desktop.Services
         /// <summary>
         /// Загрузить файл по идентификатору.
         /// </summary>
-        public async Task<string> DownloadFilAsync(Guid id, string folder)
+        public async Task<byte[]> DownloadFileAsync(Guid id)
         {
-            return await ServerStateService.ExecuteIfServerActive<string>(_logger, async () =>
+            return await ServerStateService.ExecuteIfServerActive<byte[]>(_logger, async () =>
             {
                 var response = await _client.GetAsync($"{_apiSubUrl}/download/{id}");
                 if (!response.IsSuccessStatusCode)
@@ -160,12 +160,7 @@ namespace FileCloud.Desktop.Services
                 var newName = ScriptHelper.Rename(fileName);
 
                 var fileBytes = await response.Content.ReadAsByteArrayAsync();
-                var savePath = Path.Combine(folder, newName);
-
-                await File.WriteAllBytesAsync(savePath, fileBytes);
-
-                FileMappingManager.AddOrUpdate(id, savePath);
-                return newName;
+                return fileBytes;
             });
         }
         /// <summary>

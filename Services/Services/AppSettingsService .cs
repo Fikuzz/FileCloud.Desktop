@@ -16,7 +16,7 @@ public class AppSettingsService : IAppSettingsService
     public string AppBasePath => Environment.CurrentDirectory;
     public string ApiBaseUrl => _config["ServerSettings:ApiBaseUrl"];
 
-    public string DownloadPath => _config["DownloadSettings:DownloadPath"]
+    public string DownloadPath => _config["DownloadSettings:DefaultDownloadPath"]
         ?? Path.Combine(Environment.CurrentDirectory, "Downloads");
 
     public Guid RootFolderId => Guid.Parse(_config["SystemFolders:RootFolderId"]);

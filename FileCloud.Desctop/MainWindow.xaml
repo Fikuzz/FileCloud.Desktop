@@ -164,7 +164,7 @@
                                                 AncestorType=ContextMenu}, 
                                                 Path=PlacementTarget.DataContext}"/>
                                                 <MenuItem Header="Save" 
-                                            Command="{Binding SaveFilesCommand}"/>
+                                            Command="{Binding SaveFileCommand}"/>
                                                 <MenuItem Header="Edit" 
                                             Command="{Binding UpdateFileCommand}"/>
                                                 <Separator/>

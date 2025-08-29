@@ -59,6 +59,7 @@ namespace FileCloud.Desktop.ViewModels
         public ICommand LoadFolderChildsCommand { get; }
         public ICommand UploadFileCommand { get; }
         public ICommand CreateFolderCommand { get; }
+        public ICommand SaveFilesCommand { get; }
 
         private readonly FolderModel _rootFolder;
 
@@ -87,7 +88,8 @@ namespace FileCloud.Desktop.ViewModels
             // Привязка команд к методам (RelayCommand или AsyncCommand)
             LoadFolderChildsCommand = new RelayCommand(async param => await GetFolderChilds(param as FolderViewModel));
             UploadFileCommand = new RelayCommand(async _ => await UploadFile());
-            CreateFolderCommand = new RelayCommand(_ => CreateFolder());
+            CreateFolderCommand = new RelayCommand(async _ => await CreateFolder());
+            SaveFilesCommand = new RelayCommand(_ => SaveFiles());
 
             // Подписки на события SyncService
             _bus.Subscribe<FileUploadedMessage>(async msg => await AddFile(msg));
@@ -176,6 +178,13 @@ namespace FileCloud.Desktop.ViewModels
             var folder = _folderVmFactory.Create(new FolderModel(Guid.Empty, name, FolderPathGetLastId), true);
             await _previewHelper.SetPreview(folder);
             Items.Add(folder);
+        }
+        private void SaveFiles()
+        {
+            foreach(FileViewModel file in SelectedItem)
+            {
+                file.SaveFileCommand.Execute(this);
+            }
         }
 
         // ----------------------
