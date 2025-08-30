@@ -1,7 +1,6 @@
 ﻿using FileCloud.Desktop.Commands;
 using FileCloud.Desktop.Helpers;
 using FileCloud.Desktop.Models;
-using FileCloud.Desktop.Models.Models;
 using FileCloud.Desktop.Services;
 using FileCloud.Desktop.Services.Configurations;
 using FileCloud.Desktop.Services.ServerMessages;
@@ -10,14 +9,10 @@ using FileCloud.Desktop.ViewModels.Factories;
 using FileCloud.Desktop.ViewModels.Helpers;
 using FileCloud.Desktop.ViewModels.Interfaces;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualBasic;
-using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using System.Windows.Input;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace FileCloud.Desktop.ViewModels
 {
@@ -45,6 +40,22 @@ namespace FileCloud.Desktop.ViewModels
         public ObservableCollection<ItemViewModel> Items { get; } = new();
         public ObservableCollection<ItemViewModel> SelectedItem{ get; } = new();
         public ObservableCollection<FolderViewModel> FolderPath { get; } = new(); // навигация по папкам
+
+        public string SearchQuery
+        {
+            get => _searchQuery;
+            set
+            {
+                if (_searchQuery != value)
+                {
+                    _searchQuery = value;
+                    OnPropertyChanged();
+                    // Можно запускать поиск сразу при вводе
+                    ApplySearchFilter();
+                }
+            }
+        }
+        private string _searchQuery;
 
         private string _statusMessage = string.Empty;
         public string StatusMessage
@@ -190,6 +201,14 @@ namespace FileCloud.Desktop.ViewModels
         // ----------------------
         // Методы для локальной работы с файлами
         // ----------------------
+        private void ApplySearchFilter()
+        {
+            foreach (var item in Items)
+            {
+                item.IsVisible = string.IsNullOrWhiteSpace(SearchQuery)
+                                 || item.Name.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase);
+            }
+        }
         private Task GetPreview(FileViewModel file) => throw new NotImplementedException();
         private Task OpenFile(FileViewModel file) => throw new NotImplementedException();
         private void FolderPathSet(FolderViewModel vm)

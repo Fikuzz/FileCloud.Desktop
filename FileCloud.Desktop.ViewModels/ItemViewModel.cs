@@ -29,6 +29,20 @@ namespace FileCloud.Desktop.ViewModels
         }
         public string? PreviewPath { get; set; }
 
+        private bool _isVisible = true;
+        public bool IsVisible
+        {
+            get => _isVisible;
+            set
+            {
+                if (_isVisible != value)
+                {
+                    _isVisible = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private bool _isEditing;
         public bool IsEditing
         {
