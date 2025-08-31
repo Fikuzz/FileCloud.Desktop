@@ -8,7 +8,7 @@
              xmlns:local="clr-namespace:FileCloud.Desktop.View"
              xmlns:conv="clr-namespace:FileCloud.Desktop.View.Converters"
              mc:Ignorable="d" 
-             d:DesignHeight="140" d:DesignWidth="130">
+             d:DesignHeight="140" Width="130" HorizontalAlignment="Center">
     <FrameworkElement.Resources>
         <ResourceDictionary>
             <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
@@ -59,6 +59,7 @@
             <TextBlock Text="{Binding Name}"
                                         Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
                                         HorizontalAlignment="Center"
+                                        TextAlignment="Center"
                                         Margin="4"
                                         Cursor="Hand">
                                         <!-- Двойной клик запускает команду Rename -->

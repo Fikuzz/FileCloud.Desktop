@@ -19,6 +19,7 @@
         <ResourceDictionary>
             <!-- Converters -->
             <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <conv:WidthToColumnsConverter x:Key="WidthToColumnsConverter" />
             <!-- Colors -->
             <Color x:Key="PrimaryDarkColor">#FF2C3E50</Color>
             <Color x:Key="PrimaryLightColor">#FFF0F0F0</Color>
@@ -201,47 +202,48 @@
                 </Border>
 
                 <!-- Items List -->
-                <ScrollViewer VerticalScrollBarVisibility="Auto"
-                              HorizontalScrollBarVisibility="Disabled">
-                    <ListBox SelectionMode="Extended"
+                <ListBox SelectionMode="Extended"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                              BorderThickness="0"
                              Background="Transparent"
                              ItemsSource="{Binding Items}"
-                             helpers:ListBoxSelectedItemsBinding.BindableSelectedItems="{Binding SelectedFiles}">
-                        <ListBox.ContextMenu>
-                            <ContextMenu Style="{StaticResource ContextMenuProxyStyle}">
-                                <MenuItem Header="New folder"
+                             helpers:ListBoxSelectedItemsBinding.BindableSelectedItems="{Binding SelectedFiles}" d:ItemsSource="{d:SampleData ItemCount=5}">
+                    <ListBox.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="New folder"
                                           Command="{Binding CreateFolderCommand}" />
-                            </ContextMenu>
-                        </ListBox.ContextMenu>
+                        </ContextMenu>
+                    </ListBox.ContextMenu>
 
-                        <ListBox.InputBindings>
-                            <KeyBinding Key="Delete"
+                    <ListBox.InputBindings>
+                        <KeyBinding Key="Delete"
                                         Command="{Binding DeleteFilesCommand}" />
-                        </ListBox.InputBindings>
+                    </ListBox.InputBindings>
+                    
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ListBox}, 
+                                Converter={StaticResource WidthToColumnsConverter}, ConverterParameter=130}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Top"/>
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
 
-                        <ListBox.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel />
-                            </ItemsPanelTemplate>
-                        </ListBox.ItemsPanel>
+                    <ListBox.Resources>
+                        <!-- File DataTemplate -->
+                        <DataTemplate DataType="{x:Type vm:FileViewModel}">
+                            <view:FileItemView/>
+                        </DataTemplate>
 
-                        <ListBox.Resources>
-                            <!-- File DataTemplate -->
-                            <DataTemplate DataType="{x:Type vm:FileViewModel}">
-                                <view:FileItemView/>
-                            </DataTemplate>
-
-                            <!-- Folder DataTemplate -->
-                            <DataTemplate DataType="{x:Type vm:FolderViewModel}">
-                                <view:FolderItemView/>
-                            </DataTemplate>
-                            <Style TargetType="ListBoxItem">
-                                <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                            </Style>
-                        </ListBox.Resources>
-                    </ListBox>
-                </ScrollViewer>
+                        <!-- Folder DataTemplate -->
+                        <DataTemplate DataType="{x:Type vm:FolderViewModel}">
+                            <view:FolderItemView/>
+                        </DataTemplate>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        </Style>
+                    </ListBox.Resources>
+                </ListBox>
             </DockPanel>
         </Grid>
     </DockPanel>
