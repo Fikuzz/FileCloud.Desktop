@@ -83,15 +83,5 @@
                 </i:Interaction.Triggers>
             </TextBox>
         </Grid>
-        <StackPanel.Style>
-            <Style TargetType="StackPanel">
-                <Setter Property="Visibility" Value="Visible"/>
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding IsVisible}" Value="false">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                    </DataTrigger>
-                </Style.Triggers>
-            </Style>
-        </StackPanel.Style>
     </StackPanel>
 </UserControl>

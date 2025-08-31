@@ -211,7 +211,7 @@
                         <ListBox.ContextMenu>
                             <ContextMenu Style="{StaticResource ContextMenuProxyStyle}">
                                 <MenuItem Header="New folder"
-                                          Command="{Binding PlacementTarget.Tag.CreateFolderCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                          Command="{Binding CreateFolderCommand}" />
                             </ContextMenu>
                         </ListBox.ContextMenu>
 
@@ -236,7 +236,9 @@
                             <DataTemplate DataType="{x:Type vm:FolderViewModel}">
                                 <view:FolderItemView/>
                             </DataTemplate>
-                            
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                            </Style>
                         </ListBox.Resources>
                     </ListBox>
                 </ScrollViewer>
