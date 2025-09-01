@@ -104,5 +104,11 @@ namespace FileCloud.Desktop.ViewModels
 
             Name = _originalName;
         }
+
+        public override async Task<string> DeleteAsync()
+        {
+            var responce = await _fileService.DeleteFileAsync(Id);
+            return responce.Name;
+        }
     }
 }

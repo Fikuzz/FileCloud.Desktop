@@ -31,14 +31,14 @@ namespace FileCloud.Desktop.ViewModels
         private readonly PreviewHelper _previewHelper;
         private readonly MessageBus _bus;
         private readonly IAppSettingsService _settings;
-        private readonly IFileDialogService _dialogService;
+        private readonly IDialogService _dialogService;
         private readonly ILogger<MainViewModel> _logger;
 
         // ----------------------
         // Данные для UI
         // ----------------------
         public ObservableCollection<ItemViewModel> Items { get; } = new();
-        public ObservableCollection<ItemViewModel> SelectedItem{ get; } = new();
+        public ObservableCollection<ItemViewModel> SelectedItems { get; } = new();
         public ObservableCollection<FolderViewModel> FolderPath { get; } = new(); // навигация по папкам
 
         public string SearchQuery
@@ -71,13 +71,14 @@ namespace FileCloud.Desktop.ViewModels
         public ICommand UploadFileCommand { get; }
         public ICommand CreateFolderCommand { get; }
         public ICommand SaveFilesCommand { get; }
+        public ICommand DeleteItemsCommand { get; }
 
         private readonly FolderModel _rootFolder;
 
         // ----------------------
         // Конструктор
         // ----------------------
-        public MainViewModel(FileService fileService, FolderService folderService, SyncService syncService, PreviewHelper previewHelper, MessageBus bus, IAppSettingsService settings, IFileDialogService dialogService, ILogger<MainViewModel> logger, IUiDispatcher dispatcher, IFileViewModelFactory fileViewModelFactory, IFolderViewModelFactory folderViewModelFactory)
+        public MainViewModel(FileService fileService, FolderService folderService, SyncService syncService, PreviewHelper previewHelper, MessageBus bus, IAppSettingsService settings, IDialogService dialogService, ILogger<MainViewModel> logger, IUiDispatcher dispatcher, IFileViewModelFactory fileViewModelFactory, IFolderViewModelFactory folderViewModelFactory)
         {
             _fileVmFactory = fileViewModelFactory;
             _folderVmFactory = folderViewModelFactory;
@@ -100,6 +101,7 @@ namespace FileCloud.Desktop.ViewModels
             LoadFolderChildsCommand = new RelayCommand(async param => await GetFolderChilds(param as FolderViewModel));
             UploadFileCommand = new RelayCommand(async _ => await UploadFile());
             CreateFolderCommand = new RelayCommand(async _ => await CreateFolder());
+            DeleteItemsCommand = new RelayCommand(async _ => await DeleteItemsAsync());
             SaveFilesCommand = new RelayCommand(_ => SaveFiles());
 
             // Подписки на события SyncService
@@ -192,9 +194,30 @@ namespace FileCloud.Desktop.ViewModels
         }
         private void SaveFiles()
         {
-            foreach(FileViewModel file in SelectedItem)
+            foreach(FileViewModel file in SelectedItems)
             {
                 file.SaveFileCommand.Execute(this);
+            }
+        }
+        private async Task DeleteItemsAsync()
+        {
+            if (SelectedItems.Count == 0)
+            {
+                StatusMessage = "Выберите хотя бы 1 файл";
+                return;
+            }
+
+            var dialogResult = _dialogService.SendOkCancelMessage($"Вы действительно хотите удалить {SelectedItems.Count} файл(-ов)?", "Подтвердитe удаление");
+            if(dialogResult == true)
+            {
+                var deleteResult = new List<string>();
+
+                var deletedItems = SelectedItems.ToList();
+                foreach(var item in deletedItems)
+                {
+                    deleteResult.Add(await item.DeleteAsync());
+                }
+                StatusMessage = $"Удалено {deleteResult.Count} файл(-ов):";
             }
         }
 

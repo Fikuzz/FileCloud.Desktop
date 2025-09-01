@@ -94,9 +94,9 @@ namespace FileCloud.Desktop.Services
         /// <summary>
         /// Удалить папку
         /// </summary>
-        public async Task DeleteFolderAsync(Guid folderId)
+        public async Task<DeleteFolderResponse> DeleteFolderAsync(Guid folderId)
         {
-            await ServerStateService.ExecuteIfServerActive<Task>(_logger, async () =>
+            return await ServerStateService.ExecuteIfServerActive<DeleteFolderResponse>(_logger, async () =>
             {
                 var response = await _client.DeleteAsync($"{_apiSubUrl}/delete/{folderId}");
                 if (!response.IsSuccessStatusCode)
@@ -105,7 +105,7 @@ namespace FileCloud.Desktop.Services
                     _logger.LogError(error);
                     throw new HttpRequestException($"Ошибка при удалении папки: {error}");
                 }
-                return Task.CompletedTask;
+                return (await response.Content.ReadFromJsonAsync<DeleteFolderResponse>())!;
             });
         }
 

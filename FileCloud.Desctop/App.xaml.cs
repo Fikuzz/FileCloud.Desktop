@@ -53,7 +53,7 @@ public partial class App : Application
 
         // Сервисы
         services.AddSingleton<IAppSettingsService, AppSettingsService>();
-        services.AddSingleton<IFileDialogService, FileDialogService>();
+        services.AddSingleton<IDialogService, FileDialogService>();
         services.AddSingleton<IFileSaveService, FileSaveService>();
         services.AddSingleton<SyncService>();
         services.AddSingleton<FileService>();

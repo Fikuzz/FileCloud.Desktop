@@ -57,7 +57,7 @@ namespace FileCloud.Desktop.ViewModels
             {
                 try
                 {
-                    await _folderService.DeleteFolderAsync(Id);
+                    await DeleteAsync();
                 }
                 catch
                 {
@@ -114,6 +114,12 @@ namespace FileCloud.Desktop.ViewModels
             {
                 Name = _originalName;
             }
+        }
+
+        public override async Task<string> DeleteAsync()
+        {
+            var response = await _folderService.DeleteFolderAsync(Id);
+            return response.Name;
         }
     }
 }

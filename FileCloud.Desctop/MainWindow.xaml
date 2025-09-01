@@ -138,7 +138,7 @@
                         <Button Content="📥 Скачать файл"
                                 Command="{Binding SaveFilesCommand}" />
                         <Button Content="❌ Удалить файл"
-                                Command="{Binding DeleteFilesCommand}" />
+                                Command="{Binding DeleteItemsCommand}" />
                     </StackPanel>
                 </DockPanel>
             </Border>
@@ -207,7 +207,7 @@
                              BorderThickness="0"
                              Background="Transparent"
                              ItemsSource="{Binding Items}"
-                             helpers:ListBoxSelectedItemsBinding.BindableSelectedItems="{Binding SelectedFiles}" d:ItemsSource="{d:SampleData ItemCount=5}">
+                             helpers:ListBoxSelectedItemsBinding.BindableSelectedItems="{Binding SelectedItems}" d:ItemsSource="{d:SampleData ItemCount=5}">
                     <ListBox.ContextMenu>
                         <ContextMenu>
                             <MenuItem Header="New folder"
@@ -217,7 +217,7 @@
 
                     <ListBox.InputBindings>
                         <KeyBinding Key="Delete"
-                                        Command="{Binding DeleteFilesCommand}" />
+                                        Command="{Binding DeleteItemsCommand}" />
                     </ListBox.InputBindings>
                     
                     <ListBox.ItemsPanel>
