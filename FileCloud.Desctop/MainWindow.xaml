@@ -18,8 +18,9 @@
     <Window.Resources>
         <ResourceDictionary>
             <!-- Converters -->
-            <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
             <conv:WidthToColumnsConverter x:Key="WidthToColumnsConverter" />
+            <conv:ServerStatusToColorConverter x:Key="ServerStatusToColorConverter"/>
             <!-- Colors -->
             <Color x:Key="PrimaryDarkColor">#FF2C3E50</Color>
             <Color x:Key="PrimaryLightColor">#FFF0F0F0</Color>
@@ -110,8 +111,23 @@
 
         <!-- Status Bar -->
         <StatusBar DockPanel.Dock="Bottom" Background="{StaticResource PrimaryLightBrush}">
-            <StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Left">
                 <TextBlock Name="StatusBarText" Text="{Binding StatusMessage}" />
+            </StatusBarItem>
+            
+            <StatusBarItem HorizontalAlignment="Right">
+                <StackPanel Orientation="Horizontal" Margin="5,0">
+                    <Ellipse x:Name="ServerStatusIndicator" 
+                     Width="10" 
+                     Height="10" 
+                     StrokeThickness="0.5"
+                     Stroke="DarkSlateGray"
+                     Fill="{Binding ServerStatus, Converter={StaticResource ServerStatusToColorConverter}}">
+                        <Ellipse.ToolTip>
+                            <TextBlock Margin="5,0" Text="{Binding ServerStatusMessage}"/>
+                        </Ellipse.ToolTip>
+                    </Ellipse>
+                </StackPanel>
             </StatusBarItem>
         </StatusBar>
 

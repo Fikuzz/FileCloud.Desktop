@@ -64,6 +64,20 @@ namespace FileCloud.Desktop.ViewModels
             set { _statusMessage = value; OnPropertyChanged(); }
         }
 
+        private ServerStatus _serverStatus;
+        public ServerStatus ServerStatus
+        {
+            get => _serverStatus;
+            set { _serverStatus = value; OnPropertyChanged(); }
+        }
+
+        private string _serverStatusMessage;
+        public string ServerStatusMessage
+        {
+            get => _serverStatusMessage;
+            set { _serverStatusMessage = value; OnPropertyChanged(); }
+        }
+
         // ----------------------
         // Команды для UI
         // ----------------------
@@ -284,11 +298,15 @@ namespace FileCloud.Desktop.ViewModels
         }
         private void OnServerStateChanged(ServerIsActiveMessage message)
         {
-            if (message.IsActive)
+            switch(message.Status)
             {
-                _dispatcher.BeginInvoke(async () => await GetFolderChilds(null));
+                case ServerStatus.Online:
+                    _dispatcher.BeginInvoke(async () => await GetFolderChilds(null));
+                    break;
             }
-            _dispatcher.BeginInvoke(() => StatusMessage = message.Message);
+
+            _dispatcher.BeginInvoke(() => ServerStatus = message.Status);
+            _dispatcher.BeginInvoke(() => ServerStatusMessage = message.Message);
         }
 
         // ----------------------

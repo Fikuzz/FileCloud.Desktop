@@ -43,19 +43,19 @@ public class SyncService
         _connection.Closed += async (error) =>
         {
             ServerStateService.SetServerState(false);
-            await _bus.Publish(new ServerIsActiveMessage(false, error?.Message));
+            await _bus.Publish(new ServerIsActiveMessage(ServerStatus.Offline, error?.Message));
         };
 
         _connection.Reconnecting += async (error) =>
         {
             ServerStateService.SetServerState(false);
-            await _bus.Publish(new ServerIsActiveMessage(false, error?.Message));
+            await _bus.Publish(new ServerIsActiveMessage(ServerStatus.Connecting, error?.Message));
         };
 
         _connection.Reconnected += async (connectionId) =>
         {
             ServerStateService.SetServerState(true);
-            await _bus.Publish(new ServerIsActiveMessage(true, "Сервер доступен"));
+            await _bus.Publish(new ServerIsActiveMessage(ServerStatus.Online, "Сервер доступен"));
         };
     }
 
@@ -68,14 +68,14 @@ public class SyncService
                 await _connection.StartAsync();
                 await _connection.InvokeAsync("Ping");
                 ServerStateService.SetServerState(true);
-                await _bus.Publish(new ServerIsActiveMessage(true, "Сервер доступен"));
+                await _bus.Publish(new ServerIsActiveMessage(ServerStatus.Online, "Сервер доступен"));
                 Start();
                 return;
             }
             catch
             {
                 ServerStateService.SetServerState(false);
-                await _bus.Publish(new ServerIsActiveMessage(true, "Сервер доступен"));
+                await _bus.Publish(new ServerIsActiveMessage(ServerStatus.Unknown, "Не удалось подключиться к серверу"));
             }
 
             await Task.Delay(intervalMs);
