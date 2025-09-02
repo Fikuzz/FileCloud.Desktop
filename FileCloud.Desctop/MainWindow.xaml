@@ -202,7 +202,6 @@
                                                    Margin="0"
                                                    FontSize="18"
                                                    Visibility="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter},
-                                                    Path=IsLastItem,
                                                     Converter={StaticResource BoolToVisibilityConverter}}" />
                                     </StackPanel>
                                 </DataTemplate>

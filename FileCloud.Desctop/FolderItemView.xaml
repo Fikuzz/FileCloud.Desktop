@@ -38,7 +38,7 @@
         </StackPanel.ContextMenu>
 
         <!-- Внешний вид папки -->
-        <Border BorderBrush="#CCC" BorderThickness="1" Margin="3"
+        <Border BorderBrush="#CCC" BorderThickness="0.3" Margin="3"
                                     Width="120" Padding="4" CornerRadius="10">
             <Image Width="100" Height="100">
                 <Image.Style>

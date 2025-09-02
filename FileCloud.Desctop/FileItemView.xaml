@@ -23,22 +23,19 @@
         <!-- Контекстное меню файла -->
         <StackPanel.ContextMenu>
             <ContextMenu>
-                <MenuItem Header="Open" Command="{Binding OpenFileCommand}" 
-                                            CommandParameter="{Binding RelativeSource={RelativeSource 
-                                                Mode=FindAncestor, 
-                                                AncestorType=ContextMenu}, 
-                                                Path=PlacementTarget.DataContext}"/>
+                <MenuItem Header="Open" 
+                          Command="{Binding OpenLocalFileCommand}"/>
                 <MenuItem Header="Save" 
-                                            Command="{Binding SaveFileCommand}"/>
+                          Command="{Binding SaveFileCommand}"/>
                 <MenuItem Header="Edit" 
-                                            Command="{Binding UpdateFileCommand}"/>
+                          Command="{Binding RenameCommand}"/>
                 <Separator/>
                 <MenuItem Header="Delete" 
-                                            Command="{Binding DeleteCommand}"/>
+                          Command="{Binding DeleteCommand}"/>
             </ContextMenu>
         </StackPanel.ContextMenu>
         <!-- Внешний вид файла -->
-        <Border BorderBrush="#CCC" BorderThickness="1" Margin="3"
+        <Border BorderBrush="#CCC" BorderThickness="0.3" Margin="3"
                                     Width="120" Padding="4" CornerRadius="10">
             <Image Width="100" Height="100">
                 <Image.Style>
