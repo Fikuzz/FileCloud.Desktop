@@ -12,7 +12,8 @@
     <FrameworkElement.Resources>
         <ResourceDictionary>
             <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
-            <behav:BindingProxy x:Key="Proxy" Data="{Binding}"/>
+            <behav:BindingProxy x:Key="Proxy" Data="{Binding DataContext, 
+                RelativeSource={RelativeSource AncestorType=ListBox}}"/>
         </ResourceDictionary>
     </FrameworkElement.Resources>
     <StackPanel>
@@ -27,8 +28,8 @@
         <StackPanel.ContextMenu>
             <ContextMenu>
                 <MenuItem Header="Open"
-                                            Command="{Binding Source={StaticResource Proxy}, Path=Data.LoadFolderChildsCommand}"
-                                            CommandParameter="{Binding}" />
+                          Command="{Binding Source={StaticResource Proxy}, Path=Data.LoadFolderChildsCommand}"
+                          CommandParameter="{Binding}" />
                 <MenuItem Header="Rename"
                                             Command="{Binding RenameCommand}" />
                 <Separator/>
@@ -44,11 +45,6 @@
                 <Image.Style>
                     <Style TargetType="Image">
                         <Setter Property="Source" Value="{Binding PreviewPath}" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding PreviewPath}" Value="{x:Null}">
-                                <Setter Property="Source" Value="{Binding PreviewImage}" />
-                            </DataTrigger>
-                        </Style.Triggers>
                     </Style>
                 </Image.Style>
             </Image>
@@ -65,7 +61,7 @@
                                         <!-- Двойной клик запускает команду Rename -->
                 <TextBlock.InputBindings>
                     <MouseBinding Gesture="LeftDoubleClick"
-                                                Command="{Binding RenameCommand}" />
+                                  Command="{Binding RenameCommand}" />
                 </TextBlock.InputBindings>
             </TextBlock>
 
