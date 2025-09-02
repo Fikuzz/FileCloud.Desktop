@@ -200,9 +200,7 @@
                                                 FontSize="13" />
                                         <TextBlock Text="/"
                                                    Margin="0"
-                                                   FontSize="18"
-                                                   Visibility="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter},
-                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
+                                                   FontSize="18"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
