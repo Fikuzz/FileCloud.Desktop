@@ -8,6 +8,6 @@ namespace FileCloud.Desktop.Services.Configurations
 {
     public interface IFileSaveService
     {
-        Task SaveFileAsync(Guid id, string fileName, byte[] content, string? path = null);
+        Task<string> SaveFileAsync(Guid id, string fileName, byte[] content, string? path = null);
     }
 }

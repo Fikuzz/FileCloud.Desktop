@@ -6,6 +6,7 @@ using FileCloud.Desktop.Services.Configurations;
 using FileCloud.Desktop.ViewModels.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Windows.Input;
 
@@ -29,6 +30,8 @@ namespace FileCloud.Desktop.ViewModels
         public ICommand CommitEditCommand { get; }
         public ICommand CancelEditCommand { get; }
 
+        public ICommand OpenLocalFileCommand { get; }
+
         public FileViewModel(FileModel dto, FileService fileService, IFileSaveService fileSaveService)
         {
             Id = dto.Id;
@@ -43,6 +46,7 @@ namespace FileCloud.Desktop.ViewModels
             RenameCommand = new RelayCommand(_ => BeginEdit());
             CancelEditCommand = new RelayCommand(_ => OnCancelEdit());
             SaveFileCommand = new RelayCommand(async _ => await Save());
+            OpenLocalFileCommand = new RelayCommand(async _ => await OpenLocal());
         }
 
         private void BeginEdit()
@@ -67,16 +71,17 @@ namespace FileCloud.Desktop.ViewModels
 
             }
         }
-        private async Task Save()
+        private async Task<string> Save()
         {
             try
             {
                 var content = await _fileService.DownloadFileAsync(Id);
-                await _fileSaveService.SaveFileAsync(Id, Name, content);
+                return await _fileSaveService.SaveFileAsync(Id, Name, content);
             }
             catch(Exception ex)
             {
-                Console.WriteLine(ex.Message);   
+                Console.WriteLine(ex.Message);
+                return "error";
             }
         }
 
@@ -104,11 +109,32 @@ namespace FileCloud.Desktop.ViewModels
 
             Name = _originalName;
         }
+        private async Task OpenLocal()
+        {
+            var localPath = FileMappingManager.GetLocalPath(Id);
+            if(localPath == null)
+            {
+                localPath = await Save();
+            }
+
+            try
+            {
+                Process.Start(new ProcessStartInfo(localPath)
+                {
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Не удалось открыть файл: {ex.Message}");
+            }
+        }
 
         public override async Task<string> DeleteAsync()
         {
             var responce = await _fileService.DeleteFileAsync(Id);
             return responce.Name;
         }
+
     }
 }

@@ -16,7 +16,7 @@ namespace FileCloud.Desktop.Services.Services
             _settings = settings;
         }
 
-        public async Task SaveFileAsync(Guid id, string fileName, byte[] content, string? path = null)
+        public async Task<string> SaveFileAsync(Guid id, string fileName, byte[] content, string? path = null)
         {
             var directory = path != null ? path : _settings.DownloadPath;
             path = Path.Combine(directory, fileName);
@@ -26,11 +26,11 @@ namespace FileCloud.Desktop.Services.Services
             }
             if(File.Exists(path))
             {
-                Console.WriteLine("file already exist");
-                return;
+                return path;
             }
             await File.WriteAllBytesAsync(path, content);
             FileMappingManager.AddOrUpdate(id, path);
+            return path;
         }
     }
 }

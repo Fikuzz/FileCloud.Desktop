@@ -18,9 +18,7 @@
         <!-- Обработка нажатий мыши\клавиатуры -->
         <StackPanel.InputBindings>
             <MouseBinding MouseAction="LeftDoubleClick"
-                                        Command="{Binding PlacementTarget.Tag.FileOpenCommand,
-                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                        CommandParameter="{Binding}" />
+                          Command="{Binding OpenLocalFileCommand}"/>
         </StackPanel.InputBindings>
         <!-- Контекстное меню файла -->
         <StackPanel.ContextMenu>
