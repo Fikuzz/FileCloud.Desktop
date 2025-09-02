@@ -194,7 +194,14 @@ namespace FileCloud.Desktop.ViewModels
         }
         private void SaveFiles()
         {
-            foreach(FileViewModel file in SelectedItems)
+            var files = SelectedItems.OfType<FileViewModel>();
+            if(files.Count() == 0)
+            {
+                StatusMessage = "Выберите хотя бы 1 файл";
+                return;
+            }
+
+            foreach (FileViewModel file in files)
             {
                 file.SaveFileCommand.Execute(this);
             }
