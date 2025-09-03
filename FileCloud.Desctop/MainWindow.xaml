@@ -21,6 +21,8 @@
             <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
             <conv:WidthToColumnsConverter x:Key="WidthToColumnsConverter" />
             <conv:ServerStatusToColorConverter x:Key="ServerStatusToColorConverter"/>
+            <conv:MinimizeIconConverter x:Key="MinimizeIconConverter"/>
+            <conv:MinimizeToolTipConverter x:Key="MinimizeToolTipConverter"/>
             <!-- Colors -->
             <Color x:Key="PrimaryDarkColor">#FF2C3E50</Color>
             <Color x:Key="PrimaryLightColor">#FFF0F0F0</Color>
@@ -32,16 +34,37 @@
             <!-- Default Styles -->
             <Style TargetType="Button">
                 <Setter Property="Margin" Value="4" />
-                <Setter Property="Padding" Value="10,4" />
-                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Padding" Value="10,7" />
+                <Setter Property="HorizontalContentAlignment" Value="Right"/>
+                <Setter Property="FontSize" Value="15"/> 
+                <Setter Property="FontWeight" Value="SemiBold"/>
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="BorderBrush" Value="{StaticResource BorderLightBrush}" />
                 <Setter Property="BorderThickness" Value="1" />
-                <Style.Triggers>
-                    <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="#FFEAEAEA" />
-                    </Trigger>
-                </Style.Triggers>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="border" 
+                            CornerRadius="12"
+                            Padding="{TemplateBinding Padding}"
+                            Margin="{TemplateBinding Margin}"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                                <ContentPresenter HorizontalAlignment="Center" 
+                                          VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="#FFBEE6FD"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="#FFC4E5F6"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
             </Style>
 
             <Style TargetType="TextBlock">
@@ -134,37 +157,40 @@
         <!-- Main Content Area -->
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200" MinWidth="55"/>
-                <ColumnDefinition Width="5" />
-                <!-- Splitter Grip -->
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition/>
             </Grid.ColumnDefinitions>
 
             <!-- Left Panel - Actions -->
             <Border Grid.Column="0"
+                    Width="70"
                     Background="{StaticResource PrimaryLightBrush}"
-                    Padding="4">
+                    Padding="0,8,8,8">
+                <i:Interaction.Behaviors>
+                    <behav:PanelMinimizeBehavior IsMinimized="{Binding IsLeftPanelMinimized}"/>
+                </i:Interaction.Behaviors>
                 <DockPanel>
                     <Button Content="🔄 Обновить"
                             DockPanel.Dock="Bottom"
                             Command="{Binding LoadFolderChildsCommand}" />
                     <StackPanel DockPanel.Dock="Top" Margin="0,0,0,8">
-                        <Button Content="📤 Загрузить файл"
+                        <Button Content="{Binding IsLeftPanelMinimized, Converter={StaticResource MinimizeIconConverter}}" 
+                                ToolTip="{Binding IsLeftPanelMinimized, Converter={StaticResource MinimizeToolTipConverter}}"
+                                FontSize="24" Padding="0,0,0,4" Width="50"
+                                Command="{Binding ToggleLeftPanelCommand}"/>
+
+                        <Button Content="📤 Загрузить"
+                                ToolTip="Загрузить файлы на сервер"
                                 Command="{Binding UploadFileCommand}" />
-                        <Button Content="📥 Скачать файл"
+                        <Button Content="📥 Скачать"
+                                ToolTip="Скачать файлы c сервера"
                                 Command="{Binding SaveFilesCommand}" />
-                        <Button Content="❌ Удалить файл"
+                        <Button Content="❌ Удалить"
+                                ToolTip="Удалить файлы с сервера"
                                 Command="{Binding DeleteItemsCommand}" />
                     </StackPanel>
                 </DockPanel>
             </Border>
-
-            <!-- GridSplitter -->
-            <GridSplitter Grid.Column="1"
-                          Width="5"
-                          HorizontalAlignment="Stretch"
-                          Background="Transparent"
-                          ShowsPreview="True" />
 
             <!-- Right Panel - File System -->
             <DockPanel Grid.Column="2">
@@ -196,9 +222,10 @@
                                                 Style="{StaticResource {x:Type Button}}"
                                                 BorderThickness="0"
                                                 Background="Transparent"
-                                                Padding="4,2"
+                                                Padding="2"
                                                 FontSize="13" />
                                         <TextBlock Text="/"
+                                                   Padding="0,4"
                                                    Margin="0"
                                                    FontSize="18"/>
                                     </StackPanel>

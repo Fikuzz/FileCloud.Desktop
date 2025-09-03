@@ -77,6 +77,12 @@ namespace FileCloud.Desktop.ViewModels
             get => _serverStatusMessage;
             set { _serverStatusMessage = value; OnPropertyChanged(); }
         }
+        private bool _isLeftPanelMinimized;
+        public bool IsLeftPanelMinimized
+        {
+            get => _isLeftPanelMinimized;
+            set { _isLeftPanelMinimized = value; OnPropertyChanged(); }
+        }
 
         // ----------------------
         // Команды для UI
@@ -86,6 +92,7 @@ namespace FileCloud.Desktop.ViewModels
         public ICommand CreateFolderCommand { get; }
         public ICommand SaveFilesCommand { get; }
         public ICommand DeleteItemsCommand { get; }
+        public ICommand ToggleLeftPanelCommand { get; }
 
         private readonly FolderModel _rootFolder;
 
@@ -117,6 +124,10 @@ namespace FileCloud.Desktop.ViewModels
             CreateFolderCommand = new RelayCommand(async _ => await CreateFolder());
             DeleteItemsCommand = new RelayCommand(async _ => await DeleteItemsAsync());
             SaveFilesCommand = new RelayCommand(_ => SaveFiles());
+            ToggleLeftPanelCommand = new RelayCommand(_ =>
+            {
+                IsLeftPanelMinimized = !IsLeftPanelMinimized;
+            });
 
             // Подписки на события SyncService
             _bus.Subscribe<FileUploadedMessage>(async msg => await AddFile(msg));
