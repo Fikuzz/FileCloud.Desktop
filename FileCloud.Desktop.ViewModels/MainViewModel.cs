@@ -214,7 +214,7 @@ namespace FileCloud.Desktop.ViewModels
                 name = baseName + i;
                 i++;
             }
-            var folder = _folderVmFactory.Create(new FolderModel(Guid.Empty, name, FolderPathGetLastId), true);
+            var folder = _folderVmFactory.Create(new FolderModel(Guid.Empty, name, FolderPathGetLastId), (s, e) => DeleteItem(new ItemDeletedMessage(Guid.Empty)));
             await _previewHelper.SetPreview(folder);
             Items.Add(folder);
         }
@@ -324,11 +324,13 @@ namespace FileCloud.Desktop.ViewModels
         }
         private async Task LoadFolder(FolderCreatedMessage msg)
         {
-            var folder = Items.FirstOrDefault(f => f.Id == msg.id);
+
+            var newFolder = await _folderService.GetFolderAsync(msg.id);
+
+            var folder = Items.FirstOrDefault(f => f.Id == newFolder.Id || f.Name == newFolder.Name);
             if (folder != null)
                 return;
 
-            var newFolder = await _folderService.GetFolderAsync(msg.id);
             var folderVM = _folderVmFactory.Create(newFolder);
             await _previewHelper.SetPreview(folderVM);
             _dispatcher.BeginInvoke(() => Items.Add(folderVM));

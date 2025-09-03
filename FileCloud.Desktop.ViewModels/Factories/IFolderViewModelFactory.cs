@@ -9,6 +9,6 @@ namespace FileCloud.Desktop.ViewModels.Factories
 {
     public interface IFolderViewModelFactory
     {
-        FolderViewModel Create(FolderModel dto, bool isNew = false);
+        FolderViewModel Create(FolderModel dto, EventHandler? deleteLocal = null);
     }
 }

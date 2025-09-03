@@ -63,7 +63,6 @@ namespace FileCloud.Desktop.ViewModels
                 {
                     //придумать обработку ошибок
                 }
-                DeleteLocalFolder?.Invoke(this, EventArgs.Empty);
 
             }
         }

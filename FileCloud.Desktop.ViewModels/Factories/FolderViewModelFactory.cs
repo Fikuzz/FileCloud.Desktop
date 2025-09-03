@@ -20,13 +20,15 @@ namespace FileCloud.Desktop.ViewModels.Factories
             _sp = sp;
         }
 
-        public FolderViewModel Create(FolderModel dto, bool isNew = false)
+        public FolderViewModel Create(FolderModel dto, EventHandler? deleteLocalHandler = null)
         {
             // достаём зависимости из DI
             var folderService = _sp.GetRequiredService<FolderService>();
 
             // возвращаем готовый VM
-            return new FolderViewModel(dto, folderService, isNew);
+            var folderVM = new FolderViewModel(dto, folderService, deleteLocalHandler != null);
+            folderVM.DeleteLocalFolder += deleteLocalHandler ;
+            return folderVM;
         }
     }
 }
