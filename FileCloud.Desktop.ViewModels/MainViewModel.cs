@@ -133,6 +133,7 @@ namespace FileCloud.Desktop.ViewModels
             _bus.Subscribe<FileUploadedMessage>(async msg => await AddFile(msg));
             _bus.Subscribe<ItemDeletedMessage>(msg => DeleteItem(msg));
             _bus.Subscribe<ServerIsActiveMessage>(msg => OnServerStateChanged(msg));
+            _bus.Subscribe<FolderCreatedMessage>(msg => LoadFolder(msg));
 
             _syncService.StartMonitoringAsync();
         }
@@ -321,7 +322,17 @@ namespace FileCloud.Desktop.ViewModels
             _dispatcher.BeginInvoke(() => ServerStatus = message.Status);
             _dispatcher.BeginInvoke(() => ServerStatusMessage = message.Message);
         }
+        private async Task LoadFolder(FolderCreatedMessage msg)
+        {
+            var folder = Items.FirstOrDefault(f => f.Id == msg.id);
+            if (folder != null)
+                return;
 
+            var newFolder = await _folderService.GetFolderAsync(msg.id);
+            var folderVM = _folderVmFactory.Create(newFolder);
+            await _previewHelper.SetPreview(folderVM);
+            _dispatcher.BeginInvoke(() => Items.Add(folderVM));
+        }
         // ----------------------
         // Drag & Drop Методы
         // ----------------------

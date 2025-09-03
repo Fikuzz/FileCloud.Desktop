@@ -35,6 +35,11 @@ public class SyncService
             await _bus.Publish(new ItemDeletedMessage(fileId));
         });
 
+        _connection.On<Guid>("FolderCreated", async (folderId) =>
+        {
+            await _bus.Publish(new FolderCreatedMessage(folderId));
+        });
+
         _connection.On<Guid>("FolderDeleted", async (folderId) =>
         {
             await _bus.Publish(new ItemDeletedMessage(folderId));
