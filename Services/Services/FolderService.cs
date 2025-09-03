@@ -15,10 +15,12 @@ namespace FileCloud.Desktop.Services
 
         private readonly HttpClient _client;
         private readonly ILogger<FolderService> _logger;
+        private readonly FileService _fileService;
 
-        public FolderService(IAppSettingsService settings, ILogger<FolderService> logger)
+        public FolderService(IAppSettingsService settings, ILogger<FolderService> logger, FileService fileService)
         {
             _logger = logger;
+            _fileService = fileService;
             _client = new HttpClient
             {
                 BaseAddress = new Uri(settings.ApiBaseUrl)
@@ -145,6 +147,28 @@ namespace FileCloud.Desktop.Services
 
                 return (await response.Content.ReadFromJsonAsync<FolderModel>())!;
             });
+        }
+
+        /// <summary>
+        /// Загрузить папку на сервер каскадно
+        /// </summary>
+        public async Task UploadFolderRecursiveAsync(string folderPath, Guid parentFolderId)
+        {
+            // 1. Создаем папку на сервере
+            var folderName = Path.GetFileName(folderPath);
+            var serverFolderId = await CreateFolderAsync(folderName, parentFolderId);
+
+            // 2. Загружаем все файлы в этой папке
+            foreach (var file in Directory.GetFiles(folderPath))
+            {
+                await _fileService.UploadFileAsync(serverFolderId, file);
+            }
+
+            // 3. Рекурсивно обрабатываем все подпапки
+            foreach (var subFolder in Directory.GetDirectories(folderPath))
+            {
+                await UploadFolderRecursiveAsync(subFolder, serverFolderId);
+            }
         }
     }
 }

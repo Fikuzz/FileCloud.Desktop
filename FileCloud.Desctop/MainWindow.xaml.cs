@@ -24,5 +24,28 @@ namespace FileCloud.Desktop
             InitializeComponent();
             DataContext = viewModel;
         }
+
+        private async void ListBox_Drop(object sender, DragEventArgs e)
+        {
+            if (DataContext is MainViewModel vm)
+            {
+                var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                await ((MainViewModel)DataContext).HandleDroppedFiles(files);
+            }
+        }
+
+        private void ListBox_DragOver(object sender, DragEventArgs e)
+        {
+            // Проверяем, что перетаскиваются файлы
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effects = DragDropEffects.Copy;
+            }
+            else
+            {
+                e.Effects = DragDropEffects.None;
+            }
+            e.Handled = true;
+        }
     }
 }

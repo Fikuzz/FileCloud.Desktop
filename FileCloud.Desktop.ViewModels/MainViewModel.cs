@@ -301,6 +301,8 @@ namespace FileCloud.Desktop.ViewModels
         }
         private void DeleteItem(ItemDeletedMessage msg)
         {
+            if (Items.Count == 0)
+                return;
             var deletedFile = Items.Where(i => i.Id == msg.Id).First();
             if (deletedFile != null)
             {
@@ -318,6 +320,41 @@ namespace FileCloud.Desktop.ViewModels
 
             _dispatcher.BeginInvoke(() => ServerStatus = message.Status);
             _dispatcher.BeginInvoke(() => ServerStatusMessage = message.Message);
+        }
+
+        // ----------------------
+        // Drag & Drop Методы
+        // ----------------------
+
+        public async Task HandleDroppedFiles(string[] filePaths)
+        {
+            foreach (var filePath in filePaths)
+            {
+                if (File.Exists(filePath))
+                {
+                    try
+                    {
+                        // Загружаем файл на сервер
+                        await _fileService.UploadFileAsync(FolderPathGetLastId, filePath);
+                    }
+                    catch(Exception ex)
+                    {
+                        StatusMessage = ex.Message;
+                    }
+                }
+                else if (Directory.Exists(filePath))
+                {
+                    try
+                    {
+                        // Загружаем папку на сервер (рекурсивно)
+                        await _folderService.UploadFolderRecursiveAsync(filePath, FolderPathGetLastId);
+                    }
+                    catch (Exception ex)
+                    {
+                        StatusMessage = ex.Message;
+                    }
+                }
+            }
         }
 
         // ----------------------

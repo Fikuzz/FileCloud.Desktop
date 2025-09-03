@@ -75,9 +75,9 @@ namespace FileCloud.Desktop.Services
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    var serverError = await response.Content.ReadAsStringAsync();
-                    _logger.LogError(serverError);
-                    throw new HttpRequestException($"Ошибка сервера: {serverError}");
+                    var serverError = await response.Content.ReadFromJsonAsync<ApiResult<FileModel>>();
+                    _logger.LogError(serverError.Error);
+                    throw new HttpRequestException($"Ошибка сервера: {serverError.Error}");
                 }
 
                 // Считываем результат сервера

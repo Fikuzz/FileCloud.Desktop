@@ -247,7 +247,10 @@
                              BorderThickness="0"
                              Background="Transparent"
                              ItemsSource="{Binding Items}"
-                             helpers:ListBoxSelectedItemsBinding.BindableSelectedItems="{Binding SelectedItems}" d:ItemsSource="{d:SampleData ItemCount=5}">
+                             helpers:ListBoxSelectedItemsBinding.BindableSelectedItems="{Binding SelectedItems}" d:ItemsSource="{d:SampleData ItemCount=5}"
+                             AllowDrop="True"
+                             Drop="ListBox_Drop" 
+                             DragOver="ListBox_DragOver">
                     <ListBox.ContextMenu>
                         <ContextMenu>
                             <MenuItem Header="New folder"
