@@ -114,7 +114,17 @@ namespace FileCloud.Desktop.ViewModels
                 Name = _originalName;
             }
         }
-
+        public override async Task Move(Guid targetFolderId)
+        {
+            try
+            {
+                await _folderService.MoveFolderAsync(Id, targetFolderId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
         public override async Task<string> DeleteAsync()
         {
             var response = await _folderService.DeleteFolderAsync(Id);

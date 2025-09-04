@@ -335,10 +335,10 @@ namespace FileCloud.Desktop.ViewModels
             await _previewHelper.SetPreview(folderVM);
             _dispatcher.BeginInvoke(() => Items.Add(folderVM));
         }
+        
         // ----------------------
         // Drag & Drop Методы
         // ----------------------
-
         public async Task HandleDroppedFiles(string[] filePaths)
         {
             foreach (var filePath in filePaths)
@@ -369,6 +369,8 @@ namespace FileCloud.Desktop.ViewModels
                 }
             }
         }
+        public IEnumerable<ItemViewModel> GetSelectedItems() =>
+            SelectedItems;
 
         // ----------------------
         // INotifyPropertyChanged

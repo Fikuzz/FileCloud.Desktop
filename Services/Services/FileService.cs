@@ -24,6 +24,7 @@ namespace FileCloud.Desktop.Services
                 BaseAddress = new Uri(settings.ApiBaseUrl)
             };
         }
+        
         /// <summary>
         /// Получить список всех файлов.
         /// </summary>
@@ -46,6 +47,7 @@ namespace FileCloud.Desktop.Services
                     .ToList();
             });
         }
+        
         /// <summary>
         /// Загрузить несколько файлов на сервер.
         /// </summary>
@@ -90,6 +92,7 @@ namespace FileCloud.Desktop.Services
                 return serverResult.Response;
             });
         }
+       
         /// <summary>
         /// Удалить файл по идентификатору.
         /// </summary>
@@ -136,6 +139,7 @@ namespace FileCloud.Desktop.Services
                 return bytes;
             });
         }
+        
         /// <summary>
         /// Загрузить файл по идентификатору.
         /// </summary>
@@ -163,6 +167,7 @@ namespace FileCloud.Desktop.Services
                 return fileBytes;
             });
         }
+        
         /// <summary>
         /// Переименование файла
         /// </summary>
@@ -183,6 +188,7 @@ namespace FileCloud.Desktop.Services
                 return serverResult;
             });
         }
+        
         /// <summary>
         /// Переимещение файла
         /// </summary>
@@ -190,7 +196,7 @@ namespace FileCloud.Desktop.Services
         {
             return await ServerStateService.ExecuteIfServerActive<string>(_logger, async () =>
             {
-                var request = new { newFolder = newFolder };
+                var request = new MoveFileRequest(newFolder);
                 var response = await _client.PutAsJsonAsync($"{_apiSubUrl}/move/{id}", request);
                 if (!response.IsSuccessStatusCode)
                 {

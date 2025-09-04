@@ -220,6 +220,9 @@
                                                 Command="{Binding DataContext.LoadFolderChildsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                 CommandParameter="{Binding}"
                                                 Style="{StaticResource {x:Type Button}}"
+                                                AllowDrop="True"
+                                                Drop="Breadcrumb_Drop"
+                                                DragOver="Breadcrumb_DragOver"
                                                 BorderThickness="0"
                                                 Background="Transparent"
                                                 Padding="2"
@@ -247,7 +250,7 @@
                              BorderThickness="0"
                              Background="Transparent"
                              ItemsSource="{Binding Items}"
-                             helpers:ListBoxSelectedItemsBinding.BindableSelectedItems="{Binding SelectedItems}" d:ItemsSource="{d:SampleData ItemCount=5}"
+                             helpers:ListBoxSelectedItemsBinding.BindableSelectedItems="{Binding SelectedItems}"
                              AllowDrop="True"
                              Drop="ListBox_Drop" 
                              DragOver="ListBox_DragOver">

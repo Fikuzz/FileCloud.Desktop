@@ -29,7 +29,6 @@ namespace FileCloud.Desktop.ViewModels
         public ICommand SaveFileCommand { get; }
         public ICommand CommitEditCommand { get; }
         public ICommand CancelEditCommand { get; }
-
         public ICommand OpenLocalFileCommand { get; }
 
         public FileViewModel(FileModel dto, FileService fileService, IFileSaveService fileSaveService)
@@ -127,6 +126,17 @@ namespace FileCloud.Desktop.ViewModels
             catch (Exception ex)
             {
                 Console.WriteLine($"Не удалось открыть файл: {ex.Message}");
+            }
+        }
+        public override async Task Move(Guid targetFolderId)
+        {
+            try
+            {
+                await _fileService.MoveFileAsync(Id, targetFolderId);
+            }
+            catch(Exception ex )
+            {
+                Console.WriteLine(ex.Message);
             }
         }
 

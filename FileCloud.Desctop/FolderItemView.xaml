@@ -16,7 +16,10 @@
                 RelativeSource={RelativeSource AncestorType=ListBox}}"/>
         </ResourceDictionary>
     </FrameworkElement.Resources>
-    <StackPanel>
+    <StackPanel MouseMove="FolderItem_MouseMove"
+                AllowDrop="True"
+                Drop="Folder_Drop"
+                DragOver="Folder_DragOver">
         <!-- Обработка нажатий мыши\клавиатуры -->
         <StackPanel.InputBindings>
             <MouseBinding MouseAction="LeftDoubleClick"
@@ -39,7 +42,7 @@
         </StackPanel.ContextMenu>
 
         <!-- Внешний вид папки -->
-        <Border BorderBrush="#CCC" BorderThickness="0.3" Margin="3"
+        <Border Name="border" BorderBrush="#CCC" BorderThickness="0.3" Margin="3"
                                     Width="120" Padding="4" CornerRadius="10">
             <Image Width="100" Height="100">
                 <Image.Style>

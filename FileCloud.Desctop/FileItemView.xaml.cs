@@ -1,4 +1,6 @@
-﻿using System;
+﻿using FileCloud.Desktop.ViewModels;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,6 +25,55 @@ namespace FileCloud.Desktop.View
         public FileItemView()
         {
             InitializeComponent();
+        }
+
+        private void FileItem_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed )
+            {
+                var mainWindow = Window.GetWindow(this);
+                if (mainWindow?.DataContext is MainViewModel mainVm)
+                {
+                    var items = mainVm.SelectedItems;
+                    if (items != null && items.Count > 0)
+                    {
+                        DataObject data = new DataObject();
+                        data.SetData("FileCloudSelectedItemsFormat", items);
+
+                        DragDrop.DoDragDrop((DependencyObject)sender, data, DragDropEffects.Move);
+                    }
+                }
+            }
+        }
+
+        private void OnPreviewLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var source = e.OriginalSource as DependencyObject;
+
+            while (source is ContentElement)
+                source = LogicalTreeHelper.GetParent(source);
+
+            while (source != null && !(source is ListBoxItem))
+                source = VisualTreeHelper.GetParent(source);
+
+            var lbi = source as ListBoxItem;
+
+            if (lbi != null && lbi.IsSelected)
+            {
+                var mainWindow = Window.GetWindow(this);
+                if (mainWindow?.DataContext is MainViewModel mainVm)
+                {
+                    var items = mainVm.SelectedItems;
+                    if (items != null && items.Count > 0)
+                    {
+                        DataObject data = new DataObject();
+                        data.SetData("FileCloudSelectedItemsFormat", items);
+
+                        DragDrop.DoDragDrop((DependencyObject)sender, data, DragDropEffects.Move);
+                    }
+                }
+            }
+
         }
     }
 }

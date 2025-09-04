@@ -32,7 +32,6 @@ namespace FileCloud.Desktop.Helpers
         {
             if (d is ListBox listBox)
             {
-                listBox.SelectionChanged -= ListBox_SelectionChanged;
                 listBox.SelectionChanged += ListBox_SelectionChanged;
             }
         }

@@ -30,6 +30,10 @@ namespace FileCloud.Desktop
             if (DataContext is MainViewModel vm)
             {
                 var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+
+                if (files == null || files.Length == 0)
+                    return;
+
                 await ((MainViewModel)DataContext).HandleDroppedFiles(files);
             }
         }
@@ -46,6 +50,49 @@ namespace FileCloud.Desktop
                 e.Effects = DragDropEffects.None;
             }
             e.Handled = true;
+        }
+
+        private void Breadcrumb_DragOver(object sender, DragEventArgs e)
+        {
+            if (IsValidDropTarget(sender, e))
+            {
+                e.Effects = DragDropEffects.Move;
+            }
+            else
+            {
+                e.Effects = DragDropEffects.None;
+            }
+            e.Handled = true;
+        }
+
+        private async void Breadcrumb_Drop(object sender, DragEventArgs e)
+        {
+            if (IsValidDropTarget(sender, e) &&
+                sender is Button button &&
+                button.DataContext is FolderViewModel targetFolder)
+            {
+                // Перемещаем файлы/папки
+                if (e.Data.GetDataPresent("FileCloudSelectedItemsFormat"))
+                {
+                    var files = (IList<ItemViewModel>)e.Data.GetData("FileCloudSelectedItemsFormat");
+                    foreach (var file in files)
+                        await file.Move(targetFolder.Id);
+                }
+            }
+            e.Handled = true;
+        }
+
+        private bool IsValidDropTarget(object sender, DragEventArgs e)
+        {
+            // Проверяем что перетаскиваем наши файлы/папки
+            if (!e.Data.GetDataPresent("FileCloudSelectedItemsFormat"))
+                return false;
+
+            // Проверяем что цель - папка
+            if (sender is not Button button || button.DataContext is not FolderViewModel targetFolder)
+                return false;
+
+            return true;
         }
     }
 }

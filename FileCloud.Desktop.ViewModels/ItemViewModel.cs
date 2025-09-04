@@ -58,7 +58,7 @@ namespace FileCloud.Desktop.ViewModels
         }
 
         public abstract Task<string> DeleteAsync();
-
+        public abstract Task Move(Guid targetId);
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

@@ -14,7 +14,8 @@
             <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         </ResourceDictionary>
     </FrameworkElement.Resources>
-    <StackPanel>
+    <StackPanel 
+        PreviewMouseLeftButtonDown="OnPreviewLeftButtonDown">
         <!-- Обработка нажатий мыши\клавиатуры -->
         <StackPanel.InputBindings>
             <MouseBinding MouseAction="LeftDoubleClick"
