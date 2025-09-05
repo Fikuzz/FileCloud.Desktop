@@ -182,6 +182,8 @@ namespace FileCloud.Desktop.ViewModels
             {
                 StatusMessage = ex.Message;
             }
+
+            _syncService.SwitchWatchedFolderAsync(FolderPathGetLastId);
         }
         private async Task UploadFile()
         {
