@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace FileCloud.Desktop.ViewModels
@@ -134,6 +135,7 @@ namespace FileCloud.Desktop.ViewModels
             _bus.Subscribe<ItemDeletedMessage>(msg => DeleteItem(msg));
             _bus.Subscribe<ServerIsActiveMessage>(msg => OnServerStateChanged(msg));
             _bus.Subscribe<FolderCreatedMessage>(msg => LoadFolder(msg));
+            _bus.Subscribe<ItemRenamedMessage>(msg => RenameItem(msg));
 
             _syncService.StartMonitoringAsync();
         }
@@ -267,8 +269,6 @@ namespace FileCloud.Desktop.ViewModels
                                  || item.Name.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase);
             }
         }
-        private Task GetPreview(FileViewModel file) => throw new NotImplementedException();
-        private Task OpenFile(FileViewModel file) => throw new NotImplementedException();
         private void FolderPathSet(FolderViewModel vm)
         {
             var folder = FolderPath.SingleOrDefault(f => f.Id == vm.Id);
@@ -312,12 +312,16 @@ namespace FileCloud.Desktop.ViewModels
                 _dispatcher.BeginInvoke(() => Items.Remove(deletedFile));
             }
         }
-        private void OnServerStateChanged(ServerIsActiveMessage message)
+        private async Task OnServerStateChanged(ServerIsActiveMessage message)
         {
             switch(message.Status)
             {
                 case ServerStatus.Online:
                     _dispatcher.BeginInvoke(async () => await GetFolderChilds(null));
+                    break;
+
+                case ServerStatus.Offline:
+                    await _syncService.StartMonitoringAsync();
                     break;
             }
 
@@ -336,6 +340,15 @@ namespace FileCloud.Desktop.ViewModels
             var folderVM = _folderVmFactory.Create(newFolder);
             await _previewHelper.SetPreview(folderVM);
             _dispatcher.BeginInvoke(() => Items.Add(folderVM));
+        }
+
+        private void RenameItem(ItemRenamedMessage msg)
+        {
+            var item = Items.FirstOrDefault(i => i.Id == msg.Id);
+            if(item != null)
+            {
+                _dispatcher.BeginInvoke(() => item.Name = msg.NewName);
+            }
         }
         
         // ----------------------

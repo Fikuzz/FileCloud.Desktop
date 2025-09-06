@@ -70,7 +70,7 @@ namespace FileCloud.Desktop.View
             }
         }
 
-        private async void Folder_Drop(object sender, DragEventArgs e)
+        private void Folder_Drop(object sender, DragEventArgs e)
         {
             if (DataContext is FolderViewModel targetFolder)
             {
@@ -83,7 +83,7 @@ namespace FileCloud.Desktop.View
 
                     foreach (ItemViewModel itemViewModel in items)
                     {
-                        await itemViewModel.Move(targetFolder.Id);
+                        itemViewModel.Move(targetFolder.Id);
                     }
                     e.Handled = true;
                 }

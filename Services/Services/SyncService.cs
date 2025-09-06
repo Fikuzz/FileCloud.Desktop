@@ -1,6 +1,7 @@
 ﻿using FileCloud.Desktop.Helpers;
 using FileCloud.Desktop.Models;
 using FileCloud.Desktop.Models.Models;
+using FileCloud.Desktop.Models.Responses;
 using FileCloud.Desktop.Services.Configurations;
 using FileCloud.Desktop.Services.ServerMessages;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -25,7 +26,7 @@ public class SyncService
             .WithAutomaticReconnect()
             .Build();
 
-        _connection.On<FileModel>("FileAdded", async (file) =>
+        _connection.On<FileModel>("FileLoaded", async (file) =>
         {
             await _bus.Publish(new FileUploadedMessage(file));
         });
@@ -43,6 +44,16 @@ public class SyncService
         _connection.On<Guid>("FolderDeleted", async (folderId) =>
         {
             await _bus.Publish(new ItemDeletedMessage(folderId));
+        });
+
+        _connection.On<ItemRenamedMessage>("FileRenamed", async (response) =>
+        {
+            await _bus.Publish(response);
+        });
+
+        _connection.On<ItemRenamedMessage>("FolderRenamed", async (response) =>
+        {
+            await _bus.Publish(response);
         });
 
         _connection.Closed += async (error) =>
@@ -135,9 +146,7 @@ public class SyncService
         }
         catch (Exception ex)
         {
-            // Логируем ошибку присоединения к группе
             Console.WriteLine($"Could not join group '{folderId}': {ex.Message}");
-            // _currentWatchedFolderPath не меняем, т.к. подписаться не удалось
         }
     }
 }

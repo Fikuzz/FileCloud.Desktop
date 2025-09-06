@@ -65,7 +65,7 @@ namespace FileCloud.Desktop
             e.Handled = true;
         }
 
-        private async void Breadcrumb_Drop(object sender, DragEventArgs e)
+        private void Breadcrumb_Drop(object sender, DragEventArgs e)
         {
             if (IsValidDropTarget(sender, e) &&
                 sender is Button button &&
@@ -76,7 +76,7 @@ namespace FileCloud.Desktop
                 {
                     var files = (IList<ItemViewModel>)e.Data.GetData("FileCloudSelectedItemsFormat");
                     foreach (var file in files)
-                        await file.Move(targetFolder.Id);
+                        file.Move(targetFolder.Id);
                 }
             }
             e.Handled = true;
