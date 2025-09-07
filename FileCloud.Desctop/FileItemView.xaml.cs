@@ -26,26 +26,6 @@ namespace FileCloud.Desktop.View
         {
             InitializeComponent();
         }
-
-        private void FileItem_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (e.LeftButton == MouseButtonState.Pressed )
-            {
-                var mainWindow = Window.GetWindow(this);
-                if (mainWindow?.DataContext is MainViewModel mainVm)
-                {
-                    var items = mainVm.SelectedItems;
-                    if (items != null && items.Count > 0)
-                    {
-                        DataObject data = new DataObject();
-                        data.SetData("FileCloudSelectedItemsFormat", items);
-
-                        DragDrop.DoDragDrop((DependencyObject)sender, data, DragDropEffects.Move);
-                    }
-                }
-            }
-        }
-
         private void OnPreviewLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             var source = e.OriginalSource as DependencyObject;
