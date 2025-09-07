@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Text.RegularExpressions;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -28,8 +29,18 @@ namespace FileCloud.Desktop.View.Behaviors
                    DispatcherPriority.Input,
                    new Action(() =>
                    {
+                       Match match = Regex.Match(tb.Text, @"^(.+)\.");
                        tb.Focus();
-                       tb.SelectAll();
+                       if (match.Success)
+                       {
+                           tb.Select(
+                               match.Index,
+                               match.Length - 1);
+                       }
+                       else
+                       {
+                           tb.SelectAll();
+                       }
                        Keyboard.Focus(tb);
                    }));
             }
