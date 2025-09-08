@@ -9,7 +9,9 @@ using FileCloud.Desktop.ViewModels.Factories;
 using FileCloud.Desktop.ViewModels.Helpers;
 using FileCloud.Desktop.ViewModels.Interfaces;
 using Microsoft.Extensions.Logging;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -104,7 +106,6 @@ namespace FileCloud.Desktop.ViewModels
         {
             _fileVmFactory = fileViewModelFactory;
             _folderVmFactory = folderViewModelFactory;
-
             _dispatcher = dispatcher;
             _fileService = fileService;
             _folderService = folderService;
@@ -177,7 +178,8 @@ namespace FileCloud.Desktop.ViewModels
                     catch (Exception ex){
                         _logger.LogError(ex.Message);
                     }
-                    Items.Add(item);
+                    int index = FindInsertIndex(item);
+                    Items.Insert(index, item);
                 }
             }
             catch (Exception ex)
@@ -289,7 +291,40 @@ namespace FileCloud.Desktop.ViewModels
             FolderPath.Last().Id;
         private FolderViewModel FolderPathGetLast =>
             FolderPath.Last();
+        private void SortItem()
+        {
+            var sorted = Items.OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase).ToList();
 
+            // Применяем сортировку с минимальным количеством перемещений
+            for (int i = 0; i < sorted.Count; i++)
+            {
+                if (!ReferenceEquals(Items[i], sorted[i]))
+                {
+                    int currentIndex = Items.IndexOf(sorted[i]);
+                    Items.Move(currentIndex, i);
+                }
+            }
+        }
+        private int FindInsertIndex(ItemViewModel newItem)
+        {
+            // Сортируем по имени без учета регистра
+            for (int i = 0; i < Items.Count; i++)
+            {
+                if (CompareItems(newItem, Items[i]) < 0)
+                {
+                    return i;
+                }
+            }
+            return Items.Count;
+        }
+        private int CompareItems(ItemViewModel a, ItemViewModel b)
+        {
+            int typeComparison = (a is FolderViewModel ? 0 : 1).CompareTo(b is FolderViewModel ? 0 : 1);
+            if (typeComparison != 0)
+                return typeComparison;
+
+            return string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase);
+        }
         // ----------------------
         // Методы для FileSyncService
         // ----------------------
@@ -299,7 +334,11 @@ namespace FileCloud.Desktop.ViewModels
             {
                 var fileVM = _fileVmFactory.Create(msg.Model);
                 await _previewHelper.SetPreview(fileVM);
-                _dispatcher.BeginInvoke(() => Items.Add(fileVM));
+                _dispatcher.BeginInvoke(() =>
+                {
+                    int index = FindInsertIndex(fileVM);
+                    Items.Insert(index, fileVM);
+                });
             }
         }
         private void DeleteItem(ItemDeletedMessage msg)
@@ -335,13 +374,27 @@ namespace FileCloud.Desktop.ViewModels
 
             var folder = Items.FirstOrDefault(f => f.Id == newFolder.Id || f.Name == newFolder.Name);
             if (folder != null)
+            {
+                _dispatcher.BeginInvoke(() =>
+                {
+                    int index = FindInsertIndex(folder);
+                    var i = Items.IndexOf(folder);
+                    if (i != index)
+                    {
+                        Items.Move(i, index);
+                    }
+                });
                 return;
+            }
 
             var folderVM = _folderVmFactory.Create(newFolder);
             await _previewHelper.SetPreview(folderVM);
-            _dispatcher.BeginInvoke(() => Items.Add(folderVM));
+            _dispatcher.BeginInvoke(() =>
+            {
+                int index = FindInsertIndex(folderVM);
+                Items.Insert(index, folderVM);
+            });
         }
-
         private void RenameItem(ItemRenamedMessage msg)
         {
             var item = Items.FirstOrDefault(i => i.Id == msg.Id);
