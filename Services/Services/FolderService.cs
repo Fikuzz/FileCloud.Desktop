@@ -28,6 +28,16 @@ namespace FileCloud.Desktop.Services
         }
 
         /// <summary>
+        /// Установка JWT токена
+        /// </summary>
+        /// <param name="token">JWT token</param>
+        public void SetToken(string token)
+        {
+            _client.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("bearer", token);
+        }
+
+        /// <summary>
         /// Получить папку по ID
         /// </summary>
         public async Task<FolderModel> GetFolderAsync(Guid id)
@@ -88,8 +98,8 @@ namespace FileCloud.Desktop.Services
                     _logger.LogError(error);
                     throw new HttpRequestException($"Ошибка при создании папки: {error}");
                 }
-                var id = await response.Content.ReadFromJsonAsync<Guid>();
-                return id;
+                var folder = await response.Content.ReadFromJsonAsync<FolderModel>();
+                return folder.Id;
             });
         }
 

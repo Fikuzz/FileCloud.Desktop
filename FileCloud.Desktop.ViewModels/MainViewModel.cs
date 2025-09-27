@@ -1,6 +1,7 @@
 ﻿using FileCloud.Desktop.Commands;
 using FileCloud.Desktop.Helpers;
 using FileCloud.Desktop.Models;
+using FileCloud.Desktop.Models.Models;
 using FileCloud.Desktop.Services;
 using FileCloud.Desktop.Services.Configurations;
 using FileCloud.Desktop.Services.ServerMessages;
@@ -33,7 +34,6 @@ namespace FileCloud.Desktop.ViewModels
         private readonly SyncService _syncService;
         private readonly PreviewHelper _previewHelper;
         private readonly MessageBus _bus;
-        private readonly IAppSettingsService _settings;
         private readonly IDialogService _dialogService;
         private readonly ILogger<MainViewModel> _logger;
 
@@ -87,6 +87,33 @@ namespace FileCloud.Desktop.ViewModels
             set { _isLeftPanelMinimized = value; OnPropertyChanged(); }
         }
 
+        private AuthSessionModel _session;
+        public AuthSessionModel Session
+        {
+            get => _session;
+            private set
+            {
+                _session = value;
+                InitializeAfterLogin();
+                OnPropertyChanged();
+            }
+        }
+        public void SetSession(AuthSessionModel session)
+        {
+            if (_session != null)
+                throw new InvalidOperationException("Сессия уже установлена");
+
+            Session = session;
+        }
+        public void InitializeAfterLogin()
+        {
+            _fileService.SetToken(Session.Token);
+            _folderService.SetToken(Session.Token);
+
+            var baseFolderVM = _folderVmFactory.Create(Session.RootFolder);
+            FolderPath.Add(baseFolderVM);
+        }
+
         // ----------------------
         // Команды для UI
         // ----------------------
@@ -97,12 +124,10 @@ namespace FileCloud.Desktop.ViewModels
         public ICommand DeleteItemsCommand { get; }
         public ICommand ToggleLeftPanelCommand { get; }
 
-        private readonly FolderModel _rootFolder;
-
         // ----------------------
         // Конструктор
         // ----------------------
-        public MainViewModel(FileService fileService, FolderService folderService, SyncService syncService, PreviewHelper previewHelper, MessageBus bus, IAppSettingsService settings, IDialogService dialogService, ILogger<MainViewModel> logger, IUiDispatcher dispatcher, IFileViewModelFactory fileViewModelFactory, IFolderViewModelFactory folderViewModelFactory)
+        public MainViewModel(FileService fileService, FolderService folderService, SyncService syncService, PreviewHelper previewHelper, MessageBus bus, IDialogService dialogService, ILogger<MainViewModel> logger, IUiDispatcher dispatcher, IFileViewModelFactory fileViewModelFactory, IFolderViewModelFactory folderViewModelFactory)
         {
             _fileVmFactory = fileViewModelFactory;
             _folderVmFactory = folderViewModelFactory;
@@ -111,14 +136,9 @@ namespace FileCloud.Desktop.ViewModels
             _folderService = folderService;
             _syncService = syncService;
             _bus = bus;
-            _settings = settings;
             _dialogService = dialogService;
             _previewHelper = previewHelper;
             _logger = logger;
-
-            _rootFolder = new Models.FolderModel(_settings.RootFolderId, "Root", Guid.Empty);
-            var baseFolderVM = _folderVmFactory.Create(_rootFolder);
-            FolderPath.Add(baseFolderVM);
 
             // Привязка команд к методам (RelayCommand или AsyncCommand)
             LoadFolderChildsCommand = new RelayCommand(async param => await GetFolderChilds(param as FolderViewModel));
@@ -134,11 +154,11 @@ namespace FileCloud.Desktop.ViewModels
             // Подписки на события SyncService
             _bus.Subscribe<FileUploadedMessage>(async msg => await AddFile(msg));
             _bus.Subscribe<ItemDeletedMessage>(msg => DeleteItem(msg));
-            _bus.Subscribe<ServerIsActiveMessage>(msg => OnServerStateChanged(msg));
-            _bus.Subscribe<FolderCreatedMessage>(msg => LoadFolder(msg));
+            _bus.Subscribe<ServerIsActiveMessage>(async msg => await OnServerStateChanged(msg));
+            _bus.Subscribe<FolderCreatedMessage>(async msg => await LoadFolder(msg));
             _bus.Subscribe<ItemRenamedMessage>(msg => RenameItem(msg));
 
-            _syncService.StartMonitoringAsync();
+            _ = OnServerStateChanged(_syncService.LastServerState);
         }
 
         // ----------------------

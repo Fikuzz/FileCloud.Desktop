@@ -1,22 +1,20 @@
 ﻿using FileCloud.Desktop.Helpers;
 using FileCloud.Desktop.Models;
 using FileCloud.Desktop.Models.Models;
-using FileCloud.Desktop.Models.Responses;
 using FileCloud.Desktop.Services.Configurations;
 using FileCloud.Desktop.Services.ServerMessages;
 using Microsoft.AspNetCore.SignalR.Client;
-using System;
-using System.Text.Json;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace FileCloud.Desktop.Services.Services;
 
-public class SyncService
+public  class SyncService
 {
-    private Guid _currentWatchedFolderId;
+    private  Guid _currentWatchedFolderId;
     private readonly HubConnection _connection;
     private readonly MessageBus _bus;
-    public event Action<string> ServerState;
+
+    public ServerIsActiveMessage LastServerState { get; private set; }
 
     public SyncService(IAppSettingsService settings, MessageBus bus)
     {
@@ -58,20 +56,17 @@ public class SyncService
 
         _connection.Closed += async (error) =>
         {
-            ServerStateService.SetServerState(false);
-            await _bus.Publish(new ServerIsActiveMessage(ServerStatus.Offline, error?.Message));
+            await OnServerStateChange(ServerStatus.Offline, error?.Message);
         };
 
         _connection.Reconnecting += async (error) =>
         {
-            ServerStateService.SetServerState(false);
-            await _bus.Publish(new ServerIsActiveMessage(ServerStatus.Connecting, error?.Message));
+            await OnServerStateChange(ServerStatus.Connecting, error?.Message);
         };
 
         _connection.Reconnected += async (connectionId) =>
         {
-            ServerStateService.SetServerState(true);
-            await _bus.Publish(new ServerIsActiveMessage(ServerStatus.Online, "Сервер доступен"));
+            await OnServerStateChange(ServerStatus.Online, "Сервер доступен");
 
             if (_currentWatchedFolderId != Guid.Empty)
             {
@@ -90,8 +85,7 @@ public class SyncService
                 {
                     await _connection.StartAsync();
                     await _connection.InvokeAsync("Ping");
-                    ServerStateService.SetServerState(true);
-                    await _bus.Publish(new ServerIsActiveMessage(ServerStatus.Online, "Сервер доступен"));
+                    await OnServerStateChange(ServerStatus.Online, "Сервер доступен");
 
                     // Если до подключения уже был известен путь (например, из настроек или главного окна),
                     // присоединяемся к соответствующей группе.
@@ -104,8 +98,7 @@ public class SyncService
             }
             catch
             {
-                ServerStateService.SetServerState(false);
-                await _bus.Publish(new ServerIsActiveMessage(ServerStatus.Unknown, "Не удалось подключиться к серверу"));
+                await OnServerStateChange(ServerStatus.Unknown, "Не удалось подключиться к серверу");
             }
             await Task.Delay(intervalMs);
         }
@@ -148,5 +141,12 @@ public class SyncService
         {
             Console.WriteLine($"Could not join group '{folderId}': {ex.Message}");
         }
+    }
+
+    private async Task OnServerStateChange(ServerStatus status, string? message)
+    {
+        ServerStateService.SetServerState(status == ServerStatus.Online ? true : false);
+        LastServerState = new ServerIsActiveMessage(status, message);
+        await _bus.Publish(LastServerState);
     }
 }

@@ -126,7 +126,7 @@
         <Border DockPanel.Dock="Top"
                 Background="{StaticResource PrimaryDarkBrush}"
                 Padding="12">
-            <TextBlock Text="👤 Гость"
+            <TextBlock Text="{Binding Session.Login}"
                        Foreground="White"
                        FontSize="16"
                        FontWeight="Bold" />

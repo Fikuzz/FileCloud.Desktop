@@ -26,6 +26,16 @@ namespace FileCloud.Desktop.Services
         }
         
         /// <summary>
+        /// Установка JWT токена
+        /// </summary>
+        /// <param name="token">JWT token</param>
+        public void SetToken(string token)
+        {
+            _client.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("bearer", token);
+        }
+
+        /// <summary>
         /// Получить список всех файлов.
         /// </summary>
         public async Task<List<FileModel>> GetFilesAsync()

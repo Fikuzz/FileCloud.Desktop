@@ -28,9 +28,12 @@ public partial class App : Application
 
         ServiceProvider = services.BuildServiceProvider();
 
+        var syncService = ServiceProvider.GetRequiredService<SyncService>();
+        _ = syncService.StartMonitoringAsync();
+
         // Запуск главного окна через DI
-        var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
-        mainWindow.Show();
+        var login = ServiceProvider.GetRequiredService<Login>();
+        login.Show();
         FileMappingManager.Cleanup();
     }
 
@@ -40,7 +43,6 @@ public partial class App : Application
         services.AddLogging(config =>
         {
             // Можно добавить разные провайдеры, например консоль/файл/Null
-            // config.AddConsole(); // если не нужен, оставляем закомментированным
             config.SetMinimumLevel(LogLevel.Information);
         });
 
@@ -51,6 +53,7 @@ public partial class App : Application
             .Build();
         services.AddSingleton<IConfiguration>(config);
 
+        services.AddSingleton<IServiceProvider>(provider => provider);
         // Сервисы
         services.AddSingleton<IAppSettingsService, AppSettingsService>();
         services.AddSingleton<IDialogService, FileDialogService>();
@@ -58,6 +61,7 @@ public partial class App : Application
         services.AddSingleton<SyncService>();
         services.AddSingleton<FileService>();
         services.AddSingleton<FolderService>();
+        services.AddSingleton<ILoginService, LoginService>();
 
         services.AddSingleton<PreviewHelper>();
         services.AddSingleton<MessageBus>();
@@ -65,12 +69,16 @@ public partial class App : Application
 
         // ViewModels
         services.AddSingleton<MainViewModel>();
+        services.AddSingleton<LoginViewModel>();
+
+        services.AddSingleton<IMainViewModelFactory, MainViewModelFactory>();
         services.AddTransient<FileViewModel>();
-        services.AddSingleton<IFileViewModelFactory,  FileViewModelFactory>();
+        services.AddTransient<IFileViewModelFactory,  FileViewModelFactory>();
         services.AddTransient<FolderViewModel>();
-        services.AddSingleton<IFolderViewModelFactory, FolderViewModelFactory>();
+        services.AddTransient<IFolderViewModelFactory, FolderViewModelFactory>();
 
         // Windows/Views
         services.AddSingleton<MainWindow>();
+        services.AddSingleton<Login>();
     }
 }

@@ -3,5 +3,5 @@
     public record FolderModel(
         Guid Id,
         string Name,
-        Guid ParentId);
+        Guid? ParentId);
 }

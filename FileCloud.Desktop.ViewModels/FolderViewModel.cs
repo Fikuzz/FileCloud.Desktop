@@ -1,13 +1,8 @@
 ﻿using FileCloud.Desktop.Commands;
 using FileCloud.Desktop.Models;
 using FileCloud.Desktop.Services;
-using FileCloud.Desktop.ViewModels;
 using FileCloud.Desktop.ViewModels.Interfaces;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Windows.Input;
-using System.Xml.Linq;
 
 namespace FileCloud.Desktop.ViewModels
 {
@@ -35,7 +30,7 @@ namespace FileCloud.Desktop.ViewModels
 
             Id = dto.Id;
             Name = dto.Name;
-            FolderId = dto.ParentId;
+            FolderId = dto.ParentId ?? Guid.Empty;
 
             if(isNew)
             {
