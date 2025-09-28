@@ -129,7 +129,13 @@
             <TextBlock Text="{Binding Session.Login}"
                        Foreground="White"
                        FontSize="16"
-                       FontWeight="Bold" />
+                       FontWeight="Bold">
+                <TextBlock.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Выход" Command="{Binding LogoutCommand}"/>
+                    </ContextMenu>
+                </TextBlock.ContextMenu>
+            </TextBlock>
         </Border>
 
         <!-- Status Bar -->

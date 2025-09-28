@@ -43,7 +43,7 @@ namespace FileCloud.Desktop.ViewModels
         public string Login
         {
             get => _login;
-            set {  _login = value; Debug.WriteLine($"[VM] Login updated: '{_login}'"); OnPropertyChanged(); }
+            set {  _login = value; OnPropertyChanged(); }
         }
         private string _password = string.Empty;
         public string Password
@@ -54,7 +54,6 @@ namespace FileCloud.Desktop.ViewModels
                 if (_password != value)
                 {
                     _password = value;
-                    System.Diagnostics.Debug.WriteLine($"[VM] Password updated: '{_password}'");
                     OnPropertyChanged();
                 }
             }

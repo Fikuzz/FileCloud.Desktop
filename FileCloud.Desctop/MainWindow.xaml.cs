@@ -1,4 +1,5 @@
 ﻿using FileCloud.Desktop.Services.Configurations;
+using FileCloud.Desktop.View;
 using FileCloud.Desktop.ViewModels;
 using Microsoft.Extensions.Configuration;
 using System.Text;
@@ -22,7 +23,15 @@ namespace FileCloud.Desktop
         public MainWindow(MainViewModel viewModel)
         {
             InitializeComponent();
+            viewModel.OnLogout += Logout;
             DataContext = viewModel;
+        }
+        protected override void OnClosed(EventArgs e)
+        {
+            if (DataContext is MainViewModel vm)
+                vm.OnLogout -= Logout;
+
+            base.OnClosed(e);
         }
 
         private async void ListBox_Drop(object sender, DragEventArgs e)
@@ -93,6 +102,14 @@ namespace FileCloud.Desktop
                 return false;
 
             return true;
+        }
+
+        private void Logout(LoginViewModel loginVM)
+        {
+            Login login = new Login(loginVM);
+            login.Show();
+
+            this.Close();
         }
     }
 }

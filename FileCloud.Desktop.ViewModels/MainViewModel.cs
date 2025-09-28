@@ -27,6 +27,7 @@ namespace FileCloud.Desktop.ViewModels
         // ----------------------
         private readonly IFileViewModelFactory _fileVmFactory;
         private readonly IFolderViewModelFactory _folderVmFactory;
+        private readonly ILoginViewModelFactory _loginVmFactory;
 
         private readonly IUiDispatcher _dispatcher;
         private readonly FileService _fileService;
@@ -40,6 +41,7 @@ namespace FileCloud.Desktop.ViewModels
         // ----------------------
         // Данные для UI
         // ----------------------
+        public event Action<LoginViewModel> OnLogout;
         public ObservableCollection<ItemViewModel> Items { get; } = new();
         public ObservableCollection<ItemViewModel> SelectedItems { get; } = new();
         public ObservableCollection<FolderViewModel> FolderPath { get; } = new(); // навигация по папкам
@@ -100,15 +102,14 @@ namespace FileCloud.Desktop.ViewModels
         }
         public void SetSession(AuthSessionModel session)
         {
-            if (_session != null)
-                throw new InvalidOperationException("Сессия уже установлена");
-
             Session = session;
         }
         public void InitializeAfterLogin()
         {
             _fileService.SetToken(Session.Token);
             _folderService.SetToken(Session.Token);
+
+            FolderPath.Clear();
 
             var baseFolderVM = _folderVmFactory.Create(Session.RootFolder);
             FolderPath.Add(baseFolderVM);
@@ -123,14 +124,16 @@ namespace FileCloud.Desktop.ViewModels
         public ICommand SaveFilesCommand { get; }
         public ICommand DeleteItemsCommand { get; }
         public ICommand ToggleLeftPanelCommand { get; }
+        public ICommand LogoutCommand { get; }
 
         // ----------------------
         // Конструктор
         // ----------------------
-        public MainViewModel(FileService fileService, FolderService folderService, SyncService syncService, PreviewHelper previewHelper, MessageBus bus, IDialogService dialogService, ILogger<MainViewModel> logger, IUiDispatcher dispatcher, IFileViewModelFactory fileViewModelFactory, IFolderViewModelFactory folderViewModelFactory)
+        public MainViewModel(FileService fileService, FolderService folderService, SyncService syncService, PreviewHelper previewHelper, MessageBus bus, IDialogService dialogService, ILogger<MainViewModel> logger, IUiDispatcher dispatcher, IFileViewModelFactory fileViewModelFactory, IFolderViewModelFactory folderViewModelFactory, ILoginViewModelFactory loginVmFactory)
         {
             _fileVmFactory = fileViewModelFactory;
             _folderVmFactory = folderViewModelFactory;
+            _loginVmFactory = loginVmFactory;
             _dispatcher = dispatcher;
             _fileService = fileService;
             _folderService = folderService;
@@ -141,6 +144,7 @@ namespace FileCloud.Desktop.ViewModels
             _logger = logger;
 
             // Привязка команд к методам (RelayCommand или AsyncCommand)
+            LogoutCommand = new RelayCommand(_ => Loguot());
             LoadFolderChildsCommand = new RelayCommand(async param => await GetFolderChilds(param as FolderViewModel));
             UploadFileCommand = new RelayCommand(async _ => await UploadFile());
             CreateFolderCommand = new RelayCommand(async _ => await CreateFolder());
@@ -363,12 +367,19 @@ namespace FileCloud.Desktop.ViewModels
         }
         private void DeleteItem(ItemDeletedMessage msg)
         {
-            if (Items.Count == 0)
-                return;
-            var deletedFile = Items.Where(i => i.Id == msg.Id).First();
-            if (deletedFile != null)
+            try
             {
-                _dispatcher.BeginInvoke(() => Items.Remove(deletedFile));
+                if (Items.Count == 0)
+                    return;
+                var deletedFile = Items.Where(i => i.Id == msg.Id).First();
+                if (deletedFile != null)
+                {
+                    _dispatcher.BeginInvoke(() => Items.Remove(deletedFile));
+                }
+            }
+            catch(Exception ex)
+            {
+                StatusMessage = ex.Message;
             }
         }
         private async Task OnServerStateChanged(ServerIsActiveMessage message)
@@ -466,5 +477,10 @@ namespace FileCloud.Desktop.ViewModels
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
+        public void Loguot()
+        {
+            OnLogout?.Invoke(_loginVmFactory.Create());
+        }
     }
 }

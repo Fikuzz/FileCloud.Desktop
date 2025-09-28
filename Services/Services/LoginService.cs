@@ -22,6 +22,16 @@ namespace FileCloud.Desktop.Services.Services
             };
         }
 
+        /// <summary>
+        /// Установка JWT токена
+        /// </summary>
+        /// <param name="token">JWT token</param>
+        public void SetToken(string token)
+        {
+            _client.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("bearer", token);
+        }
+
         public async Task<AuthResponse> Register(string login, string password, string email)
         {
             return await ServerStateService.ExecuteIfServerActive<AuthResponse>(_logger, async () =>
