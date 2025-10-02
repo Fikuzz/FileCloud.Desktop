@@ -19,6 +19,11 @@ namespace FileCloud.Desktop.ViewModels.Factories
         public LoginViewModel Create()
         {
             var loginVM = _sp.GetRequiredService<LoginViewModel>();
+            loginVM.StatusMessage = string.Empty;
+            loginVM.Password = string.Empty;
+            loginVM.Email = string.Empty;
+            if (loginVM.IsRegisterMode)
+                loginVM.SwitchModeCommand?.Execute(null);
             return loginVM;
         }
     }

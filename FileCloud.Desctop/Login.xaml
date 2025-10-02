@@ -4,9 +4,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FileCloud.Desktop.View"
+        xmlns:conv="clr-namespace:FileCloud.Desktop.View.Converters"
         mc:Ignorable="d"
         Title="Вход в систему" 
-        Height="300" 
+        Height="320" 
         Width="400"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize">
@@ -29,12 +30,18 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="10,5"/>
         </Style>
+
+        <conv:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <conv:ServerStatusToColorConverter x:Key="ServerStatusToColorConverter"/>
     </Window.Resources>
-    <Grid Margin="20">
+
+    <Grid Margin="20,20,20,0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto" x:Name="EmailRow"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
@@ -46,7 +53,7 @@
 
         <!-- Заголовок -->
         <TextBlock Grid.Row="0" Grid.ColumnSpan="2" 
-                   Text="Вход в систему" 
+                   Text="{Binding WindowTitle}" 
                    FontSize="20" 
                    FontWeight="Bold" 
                    HorizontalAlignment="Center" 
@@ -59,7 +66,7 @@
                    Margin="0,0,10,10"/>
         <TextBox Grid.Row="1" Grid.Column="1" 
                  Height="30" 
-                 Margin="0,0,0,10"
+                 Margin="0,0,0,5"
                  Padding="5"
                  Text="{Binding Login}"/>
 
@@ -69,35 +76,76 @@
                    VerticalAlignment="Center" 
                    Margin="0,0,10,10"/>
         <PasswordBox Grid.Row="2" Grid.Column="1"
-             Height="30"
-             Margin="0,0,0,10"
-             Padding="5"
-             PasswordChanged="PwdBox_PasswordChanged" />
+                     Height="30"
+                     Margin="0,0,0,10"
+                     Padding="5"
+                     PasswordChanged="PwdBox_PasswordChanged" />
+
+        <!-- Email (появляется при регистрации) -->
+        <TextBlock Grid.Row="3" Grid.Column="0" 
+                   Text="Email:" 
+                   VerticalAlignment="Center" 
+                   Margin="0,0,10,10"
+                   Visibility="{Binding IsRegisterMode, Converter={StaticResource BoolToVisibilityConverter}}"/>
+        <TextBox Grid.Row="3" Grid.Column="1" 
+                 Height="30" 
+                 Margin="0,0,0,10"
+                 Padding="5"
+                 Text="{Binding Email}"
+                 Visibility="{Binding IsRegisterMode, Converter={StaticResource BoolToVisibilityConverter}}"/>
 
         <!-- Чекбокс "Запомнить меня" -->
-        <CheckBox Grid.Row="3" Grid.ColumnSpan="2" 
-                  x:Name="chkRememberMe" 
+        <CheckBox Grid.Row="4" Grid.ColumnSpan="2" 
+                  Height="20"
                   Content="Запомнить меня" 
-                  Margin="0,0,0,20"/>
+                  Margin="0,0,0,10"/>
 
-        <!-- Сообщение об ошибке -->
-        <TextBlock Grid.Row="4" Grid.ColumnSpan="2" 
-                   x:Name="txtErrorMessage" 
-                   Text="" 
-                   Foreground="Red" 
-                   TextWrapping="Wrap"
-                   Visibility="Collapsed"/>
+        <!-- Кнопка входа/регистрации -->
+        <Button Grid.Row="5" Grid.Column="1"
+                VerticalAlignment="Bottom"
+                Content="{Binding ActionButtonText}"  
+                Height="30" 
+                HorizontalAlignment="Right"
+                Command="{Binding ActionCommand}"/>
 
-        <!-- Кнопки -->
-        <StackPanel Grid.Row="5" Grid.ColumnSpan="2" 
-                    Orientation="Horizontal" 
-                    HorizontalAlignment="Right">
-            <Button x:Name="btnLogin" 
-                    Content="Войти" 
-                    Width="80" 
-                    Height="30" 
-                    Margin="0,0,10,0"
-                    Command="{Binding LoginCommand}"/>
-        </StackPanel>
+        <!-- Ссылка на регистрацию -->
+        <TextBlock Grid.Row="5" Grid.Column="0"
+                   VerticalAlignment="Bottom"
+                   Text="{Binding SwitchModeText}" 
+                   Foreground="#FF0078D7" 
+                   TextDecorations="Underline"
+                   Cursor="Hand"
+                   Margin="0,0,10,0">
+            <TextBlock.InputBindings>
+                <MouseBinding MouseAction="LeftClick" Command="{Binding SwitchModeCommand}"/>
+            </TextBlock.InputBindings>
+        </TextBlock>
+
+        <!-- StatusBar -->
+        <StatusBar Grid.Row="6" Grid.ColumnSpan="2" Background="#FFF0F0F0" Margin="-20,10,-20,0">
+            <!-- Сообщение об ошибке -->
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusMessage}" 
+                           Foreground="Red" 
+                           TextWrapping="Wrap"
+                           Visibility="{Binding StatusMessage, Converter={StaticResource StringToVisibilityConverter}}" MaxWidth="360"/>
+            </StatusBarItem>
+
+            <!-- Индикатор статуса сервера -->
+            <StatusBarItem HorizontalAlignment="Right">
+                <StackPanel Orientation="Horizontal" Margin="5,0">
+                    <Ellipse x:Name="ServerStatusIndicator" 
+                             Width="10" 
+                             Height="10" 
+                             StrokeThickness="0.5"
+                             Stroke="DarkSlateGray"
+                             Fill="{Binding ServerStatus, Converter={StaticResource ServerStatusToColorConverter}}">
+                        <Ellipse.ToolTip>
+                            <TextBlock Margin="5,0" Text="{Binding ServerStatusMessage}"/>
+                        </Ellipse.ToolTip>
+                    </Ellipse>
+                </StackPanel>
+            </StatusBarItem>
+        </StatusBar>
     </Grid>
 </Window>

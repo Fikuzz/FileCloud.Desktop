@@ -1,8 +1,13 @@
 ﻿using FileCloud.Desktop.Commands;
+using FileCloud.Desktop.Helpers;
+using FileCloud.Desktop.Models;
 using FileCloud.Desktop.Models.Models;
+using FileCloud.Desktop.Models.Responses;
 using FileCloud.Desktop.Services.Configurations;
+using FileCloud.Desktop.Services.ServerMessages;
 using FileCloud.Desktop.Services.Services;
 using FileCloud.Desktop.ViewModels.Factories;
+using FileCloud.Desktop.ViewModels.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -28,9 +33,11 @@ namespace FileCloud.Desktop.ViewModels
         // ----------------------
         // Сервисы через DI
         // ----------------------
+        private readonly IUiDispatcher _dispatcher;
         private IMainViewModelFactory _mainVmFactory;
         private ILoginService _authService;
         private SyncService _syncService;
+        private readonly MessageBus _bus;
 
         // ----------------------
         // Данные для UI
@@ -72,20 +79,57 @@ namespace FileCloud.Desktop.ViewModels
             get => _statusMessage;
             set { _statusMessage = value; OnPropertyChanged(); }
         }
+        private ServerStatus _serverStatus;
+        public ServerStatus ServerStatus
+        {
+            get => _serverStatus;
+            set { _serverStatus = value; OnPropertyChanged(); }
+        }
+        private string _serverStatusMessage;
+        public string ServerStatusMessage
+        {
+            get => _serverStatusMessage;
+            set { _serverStatusMessage = value; OnPropertyChanged(); }
+        }
+        private bool _isRegisterMode = false;
+
+        public bool IsRegisterMode
+        {
+            get => _isRegisterMode;
+            set { _isRegisterMode = value; OnPropertyChanged(); UpdateUI(); }
+        }
+
+        public string WindowTitle => IsRegisterMode ? "Регистрация" : "Вход в систему";
+        public string ActionButtonText => IsRegisterMode ? "Создать аккаунт" : "Войти";
+        public string SwitchModeText => IsRegisterMode ? "Войти в аккаунт" : "Создать аккаунт";
 
         // ----------------------
         // Команды для UI
         // ----------------------
         public ICommand RegisterCommand { get; }
         public ICommand LoginCommand { get; }
-
-        public LoginViewModel(ILoginService authService, SyncService syncService, IMainViewModelFactory mainVmFactory)
+        public ICommand ActionCommand => IsRegisterMode ? RegisterCommand : LoginCommand;
+        public ICommand SwitchModeCommand { get; }
+        public LoginViewModel(ILoginService authService, SyncService syncService, IMainViewModelFactory mainVmFactory, IUiDispatcher dispatcher, MessageBus bus)
         {
+            this._bus = bus;
+            this._dispatcher = dispatcher;
             this._mainVmFactory = mainVmFactory;
             this._authService = authService;
             this._syncService = syncService;
 
             LoginCommand = new RelayCommand(async _ => await Authorization());
+            RegisterCommand = new RelayCommand(async _ => await Registration());
+            SwitchModeCommand = new RelayCommand(_ => IsRegisterMode = !IsRegisterMode);
+
+            _bus.Subscribe<ServerIsActiveMessage>(async msg => await OnServerStateChanged(msg));
+        }
+        private void UpdateUI()
+        {
+            OnPropertyChanged(nameof(WindowTitle));
+            OnPropertyChanged(nameof(ActionButtonText));
+            OnPropertyChanged(nameof(SwitchModeText));
+            OnPropertyChanged(nameof(ActionCommand));
         }
 
         private async Task Authorization()
@@ -93,21 +137,49 @@ namespace FileCloud.Desktop.ViewModels
             try
             {
                 var authResponse = await _authService.Login(Login, Password);
-                var authSession = new AuthSessionModel(
+                OpenMainVM(authResponse);
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = ex.Message;
+            }
+        }
+
+        private async Task Registration()
+        {
+            try
+            {
+                var regResponse = await _authService.Register(Login, Password, Email);
+                OpenMainVM(regResponse);
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = ex.Message;
+            }
+        }
+
+        private void OpenMainVM(AuthResponse authResponse)
+        {
+            var authSession = new AuthSessionModel(
                     authResponse.UserId,
                     authResponse.Login,
                     authResponse.Email,
                     authResponse.Token,
                     authResponse.RootFolder);
 
-                var mainVm = _mainVmFactory.Create(authSession);
-                LoginSuccessful?.Invoke(mainVm);
-                
-            }
-            catch (Exception ex)
+            var mainVm = _mainVmFactory.Create(authSession);
+            LoginSuccessful?.Invoke(mainVm);
+        }
+
+        private async Task OnServerStateChanged(ServerIsActiveMessage message)
+        {
+            if(message.Status == ServerStatus.Offline)
             {
-                StatusMessage = ex.Message;
+                await _syncService.StartMonitoringAsync();    
             }
+
+            _dispatcher.BeginInvoke(() => ServerStatus = message.Status);
+            _dispatcher.BeginInvoke(() => ServerStatusMessage = message.Message);
         }
     }
 }
